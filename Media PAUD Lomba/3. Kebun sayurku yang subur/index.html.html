@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <!-- Chosen Palette: Warm Neutrals with Vibrant Morning Accents (Cream #FAF8F5, Sky Blue, Soft Amber, Emerald, Coral, Indigo, Slate) -->
+    <!-- Application Structure Plan: Single Page Application designed for PAUD educators, parents, and young learners focusing on morning routine sequence ("Sebelum Aku Berangkat Sekolah"). Includes Overview/Home, Station 1 (8-Card Chain Sorting Game), Station 2 (Routine Detail Exploration), Station 3 (Scaffolding & Rubric Assessment), and a Modal-based Custom Image Upload Manager with LocalStorage persistence for 100% offline usage with teacher/parent uploaded PDF screenshots. Navigation history allows seamless "Kembali" and "Beranda" movement across all sub-views. -->
+    <!-- Visualization & Content Choices: 
+       - Custom Image Manager -> Upload & persist custom image files (from PDF screenshots) to localStorage -> Real-time image rendering across all game stations -> Vanilla JS FileReader API.
+       - 8-Card Interactive Track -> Game goal -> Interactive HTML/CSS card slots -> Click/Tap to place/remove -> Kinesthetic logic for PAUD morning routine sequence -> Custom JS State.
+       - Morning Timeline Chart -> Sequence goal -> Chart.js Bar Chart -> Visualizing estimated minutes spent per morning task -> Chart.js Library.
+       - Learning Domains Breakdown -> Conceptual mapping -> Chart.js Doughnut Chart -> Interactive slice toggling -> Balance of CP elements (Jati Diri, Agama, Literasi-STEAM) -> Chart.js Library.
+       - Rubric Assessment Matrix -> Assessment goal -> Dynamic HTML Card display with JS filter -> Click level to view criteria & guidance -> Vanilla JS.
+       - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Papan Pembelajaran: Kebun Sayurku yang Subur (8 Kartu Berantai PAUD)</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cream: '#FAF8F5',
+                        brandRed: '#EF4444',
+                        brandAmber: '#F59E0B',
+                        brandGreen: '#10B981',
+                        brandBlue: '#3B82F6',
+                        brandPurple: '#8B5CF6',
+                        brandIndigo: '#6366F1',
+                        brandSky: '#0284C7'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 280px;
+            max-height: 380px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 320px;
+            }
+        }
+        .card-shadow {
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+        }
+    </style>
+</head>
+<body class="bg-cream text-slate-800 font-sans min-h-screen flex flex-col selection:bg-amber-200">
+
+    <!-- Application Header & Top Navigation -->
+    <header class="bg-white border-b border-stone-200 sticky top-0 z-40 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between py-3 gap-3">
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="goHome()">
+                    <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-emerald-500 to-amber-500 text-white flex items-center justify-center text-2xl font-bold shadow-md">
+                        🥦
+                    </div>
+                    <div>
+                        <h1 class="text-lg sm:text-xl font-extrabold text-slate-800 leading-tight">Kebun Sayurku yang Subur</h1>
+                        <p class="text-xs text-slate-500 font-medium">8 Kartu Gambar Berantai &bull; Sains & Berkebun PAUD (Fase Fondasi)</p>
+                    </div>
+                </div>
+
+                <!-- Main Navigation Tabs & Custom Image Upload Button -->
+                <nav class="flex flex-wrap gap-2 text-xs sm:text-sm font-semibold items-center">
+                    <button onclick="switchTab('overview')" id="tab-overview" class="nav-btn px-3.5 py-2 rounded-xl bg-sky-600 text-white transition-all shadow-sm flex items-center gap-1.5 font-bold">
+                        <span>🏠</span> Beranda
+                    </button>
+                    <button onclick="switchTab('station1')" id="tab-station1" class="nav-btn px-3.5 py-2 rounded-xl bg-stone-100 text-slate-600 hover:bg-stone-200 transition-all flex items-center gap-1.5 font-semibold">
+                        <span>🎲</span> Stasiun 1: Permainan Kartu
+                    </button>
+                    <button onclick="switchTab('station2')" id="tab-station2" class="nav-btn px-3.5 py-2 rounded-xl bg-stone-100 text-slate-600 hover:bg-stone-200 transition-all flex items-center gap-1.5 font-semibold">
+                        <span>📚</span> Stasiun 2: Eksplorasi Rutinitas
+                    </button>
+                    <button onclick="switchTab('assessment')" id="tab-assessment" class="nav-btn px-3.5 py-2 rounded-xl bg-stone-100 text-slate-600 hover:bg-stone-200 transition-all flex items-center gap-1.5 font-semibold">
+                        <span>📝</span> Panduan & Asesmen
+                    </button>
+                    <!-- Custom Image Manager Trigger -->
+                    <button onclick="openUploadModal()" class="px-3.5 py-2 rounded-xl bg-rose-500 text-white hover:bg-rose-600 transition-all flex items-center gap-1.5 font-extrabold shadow-sm active:scale-95">
+                        <span>🖼️</span> Upload Gambar Kartu
+                    </button>
+                    <!-- Tombol Sinkronisasi Manual -->
+                    <button onclick="manualSyncData()" class="px-3.5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white transition-all flex items-center gap-1.5 font-extrabold shadow-sm active:scale-95" title="Sinkronkan Gambar & Data">
+                        <span>🔄</span> Sinkronkan
+                    </button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- ================= SECTION: OVERVIEW / BERANDA ================= -->
+        <section id="sec-overview" class="space-y-6">
+            <!-- Hero Banner -->
+            <div class="bg-gradient-to-r from-emerald-600 via-teal-500 to-amber-500 text-white rounded-3xl p-6 sm:p-8 shadow-md relative overflow-hidden">
+                <div class="max-w-3xl relative z-10">
+                    <span class="inline-block px-3 py-1 bg-white/20 backdrop-blur-md text-white text-xs font-extrabold rounded-full uppercase tracking-wider mb-3">
+                        Rantai Pembiasaan Berkebun & Sains PAUD (Fase Fondasi)
+                    </span>
+                    <h2 class="text-2xl sm:text-4xl font-black mb-3 leading-tight">
+                        Kebun Sayurku yang Subur 🥦
+                    </h2>
+                    <p class="text-white/90 text-xs sm:text-base leading-relaxed mb-6">
+                        Papan pembelajaran interaktif untuk melatih pemahaman urutan kronologis, kecintaan pada lingkungan alam, serta penalaran berantai tahapan berkebun melalui permainan <strong>8 Kartu Gambar Berantai</strong> (mulai dari memberi pupuk hingga memasak sayur lezat).
+                    </p>
+                    <div class="flex flex-wrap gap-3">
+                        <button onclick="switchTab('station1')" class="bg-white text-slate-800 font-extrabold px-5 py-2.5 rounded-2xl hover:bg-amber-50 transition-all shadow-md active:scale-95 text-xs sm:text-sm flex items-center gap-2">
+                            <span>🎮</span> Mulai Bermain Kartu Berantai
+                        </button>
+                        <button onclick="openUploadModal()" class="bg-black/30 hover:bg-black/40 backdrop-blur-md text-white font-extrabold px-5 py-2.5 rounded-2xl transition-all text-xs sm:text-sm flex items-center gap-2 border border-white/20">
+                            <span>🖼️</span> Kelola / Upload Gambar Kartu PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3 Main Station Feature Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div onclick="switchTab('station1')" class="cursor-pointer bg-white p-6 rounded-3xl border border-stone-200 hover:shadow-lg hover:border-emerald-400 transition-all flex flex-col justify-between group">
+                    <div>
+                        <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-2xl font-bold mb-4 group-hover:scale-110 transition-transform">🎲</div>
+                        <h3 class="font-bold text-lg text-slate-800 mb-1">Stasiun 1: Permainan Kartu</h3>
+                        <p class="text-xs text-slate-500 leading-relaxed">Acak 8 kartu berkebun, lalu susun kembali secara berantai mulai dari Kartu Judul (0) hingga Memasak Sayur (7).</p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between text-xs font-bold text-emerald-600">
+                        <span>Mainkan Kartu Berantai</span>
+                        <span>&rarr;</span>
+                    </div>
+                </div>
+
+                <div onclick="switchTab('station2')" class="cursor-pointer bg-white p-6 rounded-3xl border border-stone-200 hover:shadow-lg hover:border-teal-400 transition-all flex flex-col justify-between group">
+                    <div>
+                        <div class="w-12 h-12 rounded-2xl bg-teal-100 text-teal-600 flex items-center justify-center text-2xl font-bold mb-4 group-hover:scale-110 transition-transform">📚</div>
+                        <h3 class="font-bold text-lg text-slate-800 mb-1">Stasiun 2: Detail Berkebun</h3>
+                        <p class="text-xs text-slate-500 leading-relaxed">Eksplorasi makna, tujuan kemandirian, serta contoh aktivitas konkret di rumah dan sekolah untuk setiap proses berkebun.</p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between text-xs font-bold text-teal-600">
+                        <span>Eksplorasi Kebun Sayur</span>
+                        <span>&rarr;</span>
+                    </div>
+                </div>
+
+                <div onclick="switchTab('assessment')" class="cursor-pointer bg-white p-6 rounded-3xl border border-stone-200 hover:shadow-lg hover:border-purple-400 transition-all flex flex-col justify-between group">
+                    <div>
+                        <div class="w-12 h-12 rounded-2xl bg-purple-100 text-brandPurple flex items-center justify-center text-2xl font-bold mb-4 group-hover:scale-110 transition-transform">📝</div>
+                        <h3 class="font-bold text-lg text-slate-800 mb-1">Panduan & Asesmen</h3>
+                        <p class="text-xs text-slate-500 leading-relaxed">Pertanyaan pemantik scaffolding pendidik dan rubrik lembar observasi autentik perkembangan PAUD (BB, MB, BSH, BSB).</p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between text-xs font-bold text-brandPurple">
+                        <span>Lihat Panduan & Rubrik</span>
+                        <span>&rarr;</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visual Analytics Grid: Morning Timeline & CP Learning Elements -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Morning Timeline Chart -->
+                <div class="bg-white rounded-3xl p-6 border border-stone-200">
+                    <h3 class="font-extrabold text-sm text-slate-800 mb-1 flex items-center gap-2">
+                        <span>🌱</span> Estimasi Waktu Siklus Pertumbuhan & Perawatan Sayur
+                    </h3>
+                    <p class="text-xs text-slate-500 mb-4">Estimasi alokasi waktu dan frekuensi merawat kebun sayur.</p>
+                    <div class="chart-container">
+                        <canvas id="chart-morning-timeline"></canvas>
+                    </div>
+                </div>
+
+                <!-- Learning Domains Chart -->
+                <div class="bg-white rounded-3xl p-6 border border-stone-200">
+                    <h3 class="font-extrabold text-sm text-slate-800 mb-1 flex items-center gap-2">
+                        <span>🎯</span> Pemetaan Elemen Capaian Pembelajaran (CP)
+                    </h3>
+                    <p class="text-xs text-slate-500 mb-4">Keseimbangan muatan Sains-STEAM, Rasa Syukur Alam, dan Kemandirian Motorik.</p>
+                    <div class="chart-container">
+                        <canvas id="chart-cp-domains"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- List of 8 Chain Cards Summary -->
+            <div class="bg-white rounded-3xl p-6 border border-stone-200">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                    <h3 class="font-extrabold text-base text-slate-800 flex items-center gap-2">
+                        <span>📑</span> Tampilan Visual 8 Kartu "Kebun Sayurku yang Subur"
+                    </h3>
+                    <button onclick="openUploadModal()" class="text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 px-3 py-1.5 rounded-xl transition-all self-start sm:self-auto">
+                        ⚙️ Ubah/Ganti Gambar Kartu
+                    </button>
+                </div>
+                <div id="summary-cards-grid" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+                    <!-- Rendered dynamically in JS -->
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ================= SECTION: STATION 1 (PERMAINAN KARTU BERANTAI) ================= -->
+        <section id="sec-station1" class="hidden space-y-6">
+            <!-- Navigation Header Controls -->
+            <div class="flex items-center justify-between bg-white p-3 px-4 rounded-2xl border border-stone-200 shadow-sm">
+                <button onclick="goBack()" class="flex items-center gap-2 text-xs font-bold text-slate-700 bg-stone-100 px-3.5 py-2 rounded-xl border border-stone-300 hover:bg-stone-200 active:scale-95 transition-all">
+                    <span>⬅️</span> Kembali
+                </button>
+                <div class="text-xs font-extrabold text-slate-600 hidden sm:block">
+                    Stasiun 1 &bull; Permainan Mengurutkan 8 Kartu Berantai Kebun Sayur
+                </div>
+                <button onclick="goHome()" class="flex items-center gap-2 text-xs font-bold text-sky-900 bg-sky-100 px-3.5 py-2 rounded-xl border border-sky-300 hover:bg-sky-200 active:scale-95 transition-all">
+                    <span>🏠</span> Beranda
+                </button>
+            </div>
+
+            <div class="bg-white rounded-3xl p-6 border border-stone-200 shadow-sm space-y-6">
+                <!-- Title & Controls -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-100 pb-4">
+                    <div>
+                        <span class="text-xs font-extrabold text-emerald-600 uppercase tracking-wider">Permainan Edukasi PAUD</span>
+                        <h2 class="text-xl font-black text-slate-800 flex items-center gap-2">
+                            <span>🥦</span> Permainan 8 Kartu Berantai "Kebun Sayurku yang Subur"
+                        </h2>
+                        <p class="text-xs text-slate-500 mt-1">Klik atau ketuk kartu di wadah teracak untuk memasukkannya ke dalam rantai. Susun mulai dari Kartu Judul (0) hingga Memasak Sayur (7)!</p>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="shuffleCardsGame()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-4 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-sm active:scale-95 transition-all">
+                            <span>🔄</span> Acak Ulang Kartu
+                        </button>
+                        <button onclick="resetChainGame()" class="bg-stone-100 hover:bg-stone-200 text-slate-700 font-bold px-3 py-2 rounded-xl text-xs transition-all">
+                            Reset
+                        </button>
+                    </div>
+                </div>
+
+                <!-- GAME TRACK (SLOTS 0 TO 7) -->
+                <div class="bg-emerald-50/70 border-2 border-dashed border-emerald-300 p-4 sm:p-6 rounded-3xl space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xs font-black text-emerald-900 uppercase tracking-wider flex items-center gap-1">
+                            <span>🔗</span> Rantai Urutan Berkebun (8 Slot Kartu)
+                        </h3>
+                        <span id="placed-counter" class="text-xs font-bold text-emerald-800 bg-emerald-200 px-3 py-1 rounded-full">
+                            Tersusun: 0 / 8 Kartu
+                        </span>
+                    </div>
+
+                    <!-- Slots Grid -->
+                    <div id="chain-track-container" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3 min-h-[170px]">
+                        <!-- Dynamic Slots Rendered via JS -->
+                    </div>
+                </div>
+
+                <!-- SHUFFLED CARDS POOL -->
+                <div class="bg-stone-50 border border-stone-200 p-4 sm:p-6 rounded-3xl space-y-3">
+                    <h3 class="text-xs font-black text-slate-600 uppercase tracking-wider flex items-center gap-1">
+                        <span>📦</span> Wadah Kartu Teracak (Klik untuk Memilih)
+                    </h3>
+                    <div id="shuffled-pool-container" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3 min-h-[150px]">
+                        <!-- Dynamic Shuffled Pool Rendered via JS -->
+                    </div>
+                </div>
+
+                <!-- Feedback Banner & Check Button -->
+                <div id="game-feedback-banner" class="hidden p-4 rounded-2xl text-center font-extrabold text-sm border shadow-sm transition-all">
+                    <!-- Feedback injected via JS -->
+                </div>
+
+                <div class="flex justify-center pt-2">
+                    <button id="check-btn" onclick="checkCardChain()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold px-8 py-3 rounded-2xl text-sm shadow-md active:scale-95 transition-all flex items-center gap-2">
+                        <span>✅</span> Periksa Rantai Kartu
+                    </button>
+                </div>
+
+                <!-- Bottom Navigation Bar -->
+                <div class="flex justify-between items-center pt-6 border-t border-stone-100">
+                    <button onclick="goBack()" class="flex items-center gap-2 text-xs font-bold text-slate-600 bg-stone-100 px-4 py-2 rounded-xl hover:bg-stone-200 transition-all">
+                        <span>⬅️</span> Kembali
+                    </button>
+                    <button onclick="goHome()" class="flex items-center gap-2 text-xs font-bold text-sky-900 bg-sky-100 px-4 py-2 rounded-xl hover:bg-sky-200 transition-all">
+                        <span>🏠</span> Ke Beranda
+                    </button>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ================= SECTION: STATION 2 (EKSPLORASI RUTINITAS) ================= -->
+        <section id="sec-station2" class="hidden space-y-6">
+            <!-- Navigation Header Controls -->
+            <div class="flex items-center justify-between bg-white p-3 px-4 rounded-2xl border border-stone-200 shadow-sm">
+                <button onclick="goBack()" class="flex items-center gap-2 text-xs font-bold text-slate-700 bg-stone-100 px-3.5 py-2 rounded-xl border border-stone-300 hover:bg-stone-200 active:scale-95 transition-all">
+                    <span>⬅️</span> Kembali
+                </button>
+                <div class="text-xs font-extrabold text-slate-600 hidden sm:block">
+                    Stasiun 2 &bull; Eksplorasi Detail Kebun Sayur
+                </div>
+                <button onclick="goHome()" class="flex items-center gap-2 text-xs font-bold text-sky-900 bg-sky-100 px-3.5 py-2 rounded-xl border border-sky-300 hover:bg-sky-200 active:scale-95 transition-all">
+                    <span>🏠</span> Beranda
+                </button>
+            </div>
+
+            <div class="bg-white rounded-3xl p-6 border border-stone-200 shadow-sm space-y-6">
+                <div class="border-b border-stone-100 pb-4">
+                    <span class="text-xs font-extrabold text-brandGreen uppercase tracking-wider">Eksplorasi Berkebun & Sains PAUD</span>
+                    <h2 class="text-xl font-black text-slate-800">📚 Detail Proses Berkebun & Contoh Aktivitas Nyata</h2>
+                    <p class="text-xs text-slate-500 mt-1">Eksplorasi nilai sains, pemeliharaan tanaman, serta inspirasi kegiatan berkebun di rumah dan sekolah PAUD.</p>
+                </div>
+
+                <!-- Habit Details Grid -->
+                <div id="habit-cards-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Dynamic Habit Detail Cards Rendered via JS -->
+                </div>
+
+                <!-- Bottom Navigation Bar -->
+                <div class="flex justify-between items-center pt-6 border-t border-stone-100">
+                    <button onclick="goBack()" class="flex items-center gap-2 text-xs font-bold text-slate-600 bg-stone-100 px-4 py-2 rounded-xl hover:bg-stone-200 transition-all">
+                        <span>⬅️</span> Kembali
+                    </button>
+                    <button onclick="goHome()" class="flex items-center gap-2 text-xs font-bold text-sky-900 bg-sky-100 px-4 py-2 rounded-xl hover:bg-sky-200 transition-all">
+                        <span>🏠</span> Ke Beranda
+                    </button>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ================= SECTION: ASSESSMENT & GUIDANCE ================= -->
+        <section id="sec-assessment" class="hidden space-y-6">
+            <!-- Navigation Header Controls -->
+            <div class="flex items-center justify-between bg-white p-3 px-4 rounded-2xl border border-stone-200 shadow-sm">
+                <button onclick="goBack()" class="flex items-center gap-2 text-xs font-bold text-slate-700 bg-stone-100 px-3.5 py-2 rounded-xl border border-stone-300 hover:bg-stone-200 active:scale-95 transition-all">
+                    <span>⬅️</span> Kembali
+                </button>
+                <div class="text-xs font-extrabold text-slate-600 hidden sm:block">
+                    Panduan Pendidik & Rubrik Asesmen Autentik PAUD
+                </div>
+                <button onclick="goHome()" class="flex items-center gap-2 text-xs font-bold text-sky-900 bg-sky-100 px-3.5 py-2 rounded-xl border border-sky-300 hover:bg-sky-200 active:scale-95 transition-all">
+                    <span>🏠</span> Beranda
+                </button>
+            </div>
+
+            <!-- Scaffolding Questions Section -->
+            <div class="bg-white rounded-3xl p-6 border border-stone-200 shadow-sm">
+                <div class="border-b border-stone-100 pb-4 mb-4">
+                    <span class="text-xs font-extrabold text-emerald-600 uppercase tracking-wider">Panduan Pendidik & Orang Tua</span>
+                    <h2 class="text-xl font-black text-slate-800">💬 Pertanyaan Pemantik Scaffolding</h2>
+                    <p class="text-xs text-slate-500">Gunakan pertanyaan terarah berikut untuk memandu logika berantai dan penalaran sains anak saat bermain kartu kebun sayur.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-base">🥦</span>
+                            <h3 class="font-extrabold text-xs text-emerald-900">Mencari Kartu Judul (Kartu 0)</h3>
+                        </div>
+                        <p class="text-xs text-slate-700 italic">"Kartu mana yang menjadi judul utama dari cerita kebun sayur kita?"</p>
+                    </div>
+
+                    <div class="p-4 rounded-2xl bg-amber-50/70 border border-amber-200">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-base">🌱</span>
+                            <h3 class="font-extrabold text-xs text-amber-900">Penanaman & Perawatan (Kartu 1 - 3)</h3>
+                        </div>
+                        <p class="text-xs text-slate-700 italic">"Sebelum menanam bibit sayur (Kartu 2), tanah diberi apa agar gembur (Kartu 1)? Lalu apa yang disiramkan setiap hari (Kartu 3)?"</p>
+                    </div>
+
+                    <div class="p-4 rounded-2xl bg-teal-50/70 border border-teal-200">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-base">🌿</span>
+                            <h3 class="font-extrabold text-xs text-teal-900">Pembersihan & Pertumbuhan (Kartu 4 - 5)</h3>
+                        </div>
+                        <p class="text-xs text-slate-700 italic">"Mengapa rumput liar di sekitar tanaman harus dicabut (Kartu 4)? Bagaimana kondisi sayuran jika dirawat dengan penuh kasih sayang (Kartu 5)?"</p>
+                    </div>
+
+                    <div class="p-4 rounded-2xl bg-orange-50/70 border border-orange-200">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-base">🍳</span>
+                            <h3 class="font-extrabold text-xs text-orange-900">Panen & Olahan Makanan (Kartu 6 - 7)</h3>
+                        </div>
+                        <p class="text-xs text-slate-700 italic">"Setelah sayuran dipetik dari kebun (Kartu 6), apa yang bisa kita olah di dapur agar tubuh sehat dan kuat (Kartu 7)?"</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rubric Assessment Section -->
+            <div class="bg-white rounded-3xl p-6 border border-stone-200 shadow-sm">
+                <div class="border-b border-stone-100 pb-4 mb-6">
+                    <span class="text-xs font-extrabold text-brandPurple uppercase tracking-wider">Asesmen Autentik PAUD</span>
+                    <h2 class="text-xl font-black text-slate-800">📝 Rubrik Lembar Observasi Perkembangan</h2>
+                    <p class="text-xs text-slate-500">Pilih skala capaian di bawah untuk melihat kriteria observasi dan strategi bimbingannya.</p>
+                </div>
+
+                <!-- Rubric Level Selector Buttons -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+                    <button onclick="selectRubric('BB')" id="rubric-btn-BB" class="rubric-btn p-3 rounded-2xl border border-stone-200 text-left hover:border-sky-400 transition-all bg-stone-50">
+                        <span class="block text-xs font-black text-rose-600 mb-1">BB</span>
+                        <span class="text-[11px] font-bold text-slate-700 block">Belum Berkembang</span>
+                    </button>
+                    <button onclick="selectRubric('MB')" id="rubric-btn-MB" class="rubric-btn p-3 rounded-2xl border border-stone-200 text-left hover:border-sky-400 transition-all bg-stone-50">
+                        <span class="block text-xs font-black text-amber-600 mb-1">MB</span>
+                        <span class="text-[11px] font-bold text-slate-700 block">Mulai Berkembang</span>
+                    </button>
+                    <button onclick="selectRubric('BSH')" id="rubric-btn-BSH" class="rubric-btn p-3 rounded-2xl border border-stone-200 text-left hover:border-sky-400 transition-all bg-stone-50">
+                        <span class="block text-xs font-black text-blue-600 mb-1">BSH</span>
+                        <span class="text-[11px] font-bold text-slate-700 block">Berkembang Sesuai Harapan</span>
+                    </button>
+                    <button onclick="selectRubric('BSB')" id="rubric-btn-BSB" class="rubric-btn p-3 rounded-2xl border-2 border-brandGreen text-left hover:border-green-600 transition-all bg-green-50/40">
+                        <span class="block text-xs font-black text-brandGreen mb-1">BSB</span>
+                        <span class="text-[11px] font-bold text-slate-700 block">Berkembang Sangat Baik</span>
+                    </button>
+                </div>
+
+                <!-- Rubric Detail View -->
+                <div id="rubric-detail-card" class="bg-stone-50 p-6 rounded-3xl border border-stone-200 mb-6">
+                    <!-- Dynamic Rubric Detail Content -->
+                </div>
+
+                <!-- Bottom Navigation Bar -->
+                <div class="flex justify-between items-center pt-6 border-t border-stone-100">
+                    <button onclick="goBack()" class="flex items-center gap-2 text-xs font-bold text-slate-600 bg-stone-100 px-4 py-2 rounded-xl hover:bg-stone-200 transition-all">
+                        <span>⬅️</span> Kembali
+                    </button>
+                    <button onclick="goHome()" class="flex items-center gap-2 text-xs font-bold text-sky-900 bg-sky-100 px-4 py-2 rounded-xl hover:bg-sky-200 transition-all">
+                        <span>🏠</span> Ke Beranda
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- CUSTOM IMAGE MANAGER MODAL POPUP -->
+    <div id="image-upload-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden border border-stone-200">
+            <!-- Modal Header -->
+            <div class="bg-stone-900 text-white p-5 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">🖼️</span>
+                    <div>
+                        <h3 class="font-extrabold text-base leading-tight">Pengelola Gambar Kartu Khusus</h3>
+                        <p class="text-[11px] text-stone-300">Unggah screenshot gambar dari PDF Anda. Gambar tersimpan aman di browser laptop/HP Anda.</p>
+                    </div>
+                </div>
+                <button onclick="closeUploadModal()" class="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 text-white font-bold text-sm flex items-center justify-center transition-all">
+                    ✕
+                </button>
+            </div>
+
+            <!-- Modal Content (Grid of 8 cards upload controls) -->
+            <div class="p-6 overflow-y-auto space-y-4 flex-grow bg-stone-50">
+                <div class="bg-sky-50 border border-sky-200 p-3.5 rounded-2xl text-xs text-sky-900 flex items-start gap-2">
+                    <span class="text-base">💡</span>
+                    <div>
+                        <strong>Petunjuk:</strong> Buka file PDF ilustrasi Anda, lalu buat <i>screenshot</i> (potongan foto) tiap gambar kartu. Klik tombol <strong>"Pilih File Foto"</strong> pada kartu yang sesuai di bawah ini.
+                    </div>
+                </div>
+
+                <div id="modal-card-upload-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <!-- Dynamic upload items rendered via JS -->
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="bg-white p-4 border-t border-stone-200 flex flex-wrap justify-between items-center gap-3">
+                <button onclick="clearAllCustomImages()" class="text-xs font-bold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 px-3.5 py-2 rounded-xl transition-all">
+                    🗑️ Reset Semua Gambar
+                </button>
+                <button onclick="closeUploadModal()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold px-6 py-2 rounded-xl text-xs shadow-sm transition-all">
+                    ✅ Selesai & Terapkan
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-stone-200 py-4 mt-8">
+        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-500 font-medium">
+            Papan Pembelajaran Interaktif PAUD &mdash; 8 Kartu Berantai: Kebun Sayurku yang Subur
+        </div>
+    </footer>
+
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // Master Data for the 8 Cards (Kebun Sayurku yang Subur)
+        const cardMasterData = [
+            {
+                id: 0,
+                type: 'judul',
+                title: 'Kebun Sayurku yang Subur',
+                shortName: 'Kartu Judul',
+                emoji: '🥦',
+                bgColor: 'bg-emerald-600',
+                borderColor: 'border-emerald-700',
+                textColor: 'text-white',
+                desc: 'Kartu Utama Pembuka Rantai Kebun Sayurku yang Subur.',
+                customImg: null
+            },
+            {
+                id: 1,
+                type: 'habit',
+                title: '1. Memberi Pupuk',
+                shortName: 'Memberi Pupuk',
+                emoji: '🪵',
+                bgColor: 'bg-amber-600',
+                borderColor: 'border-amber-700',
+                textColor: 'text-white',
+                desc: 'Menyiapkan tanah gembur dan memberi pupuk agar kaya nutrisi bagi tanaman.',
+                customImg: null
+            },
+            {
+                id: 2,
+                type: 'habit',
+                title: '2. Menanam Bibit Sayur',
+                shortName: 'Menanam Bibit',
+                emoji: '🌱',
+                bgColor: 'bg-green-600',
+                borderColor: 'border-green-700',
+                textColor: 'text-white',
+                desc: 'Memasukkan benih atau bibit sayur ke dalam tanah dengan penuh kehati-hatian.',
+                customImg: null
+            },
+            {
+                id: 3,
+                type: 'habit',
+                title: '3. Menyiram Sayuran',
+                shortName: 'Menyiram Sayuran',
+                emoji: '💧',
+                bgColor: 'bg-sky-500',
+                borderColor: 'border-sky-600',
+                textColor: 'text-white',
+                desc: 'Menyiram tanaman dengan air secara teratur di pagi dan sore hari.',
+                customImg: null
+            },
+            {
+                id: 4,
+                type: 'habit',
+                title: '4. Mencabut Rumput',
+                shortName: 'Mencabut Rumput',
+                emoji: '🌿',
+                bgColor: 'bg-lime-600',
+                borderColor: 'border-lime-700',
+                textColor: 'text-white',
+                desc: 'Membersihkan rumput liar (gulma) yang mengganggu pertumbuhan sayuran.',
+                customImg: null
+            },
+            {
+                id: 5,
+                type: 'habit',
+                title: '5. Sayur Tumbuh Subur',
+                shortName: 'Sayur Tumbuh Subur',
+                emoji: '🥬',
+                bgColor: 'bg-teal-500',
+                borderColor: 'border-teal-600',
+                textColor: 'text-white',
+                desc: 'Mengamati daun dan batang sayuran tumbuh tinggi, segar, dan sehat.',
+                customImg: null
+            },
+            {
+                id: 6,
+                type: 'habit',
+                title: '6. Memetik Sayur',
+                shortName: 'Memetik Sayur',
+                emoji: '🧺',
+                bgColor: 'bg-orange-500',
+                borderColor: 'border-orange-600',
+                textColor: 'text-white',
+                desc: 'Memanen dan memetik sayuran segar hasil jerih payah merawat kebun.',
+                customImg: null
+            },
+            {
+                id: 7,
+                type: 'habit',
+                title: '7. Memasak Sayur',
+                shortName: 'Memasak Sayur',
+                emoji: '🍳',
+                bgColor: 'bg-rose-500',
+                borderColor: 'border-rose-600',
+                textColor: 'text-white',
+                desc: 'Mencuci dan memasak sayuran menjadi hidangan bergizi lezat untuk keluarga.',
+                customImg: null
+            }
+        ];
+
+        // Extended Details for Station 2
+        const habitDetails = [
+            {
+                id: 1,
+                title: '1. Memberi Pupuk',
+                emoji: '🪵',
+                objective: 'Mengenal media tanam dan pentingnya nutrisi pupuk alami bagi kesuburan tanah.',
+                schoolAct: 'Eksplorasi meremas tanah humus/pupuk kompos segar menggunakan sarung tangan.',
+                homeAct: 'Mengajak anak mencampur tanah dan pupuk organik di pot sederhana.'
+            },
+            {
+                id: 2,
+                title: '2. Menanam Bibit Sayur',
+                emoji: '🌱',
+                objective: 'Melatih motorik halus, ketelitian, serta kasih sayang pada awal kehidupan tanaman.',
+                schoolAct: 'Praktik menanam biji bayam/kangkung/sawi pada media tanam cup ramah lingkungan.',
+                homeAct: 'Menanam benih sayur favorit anak dan menamai pot milik anak.'
+            },
+            {
+                id: 3,
+                title: '3. Menyiram Sayuran',
+                emoji: '💧',
+                objective: 'Membiasakan tanggung jawab rutin dan memahami bahwa tanaman membutuhkan air.',
+                schoolAct: 'Jadwal piket menyiram tanaman kebun sekolah bersama teman secara bergantian.',
+                homeAct: 'Memberi anak alat penyiram mini (pancuran kecil) untuk menyiram tanaman di pekarangan.'
+            },
+            {
+                id: 4,
+                title: '4. Mencabut Rumput',
+                emoji: '🌿',
+                objective: 'Melatih ketelitian visual-motorik serta sikap kepedulian merawat kebersihan lingkungan kebun.',
+                schoolAct: 'Bermain peran menjadi "Detektif Kebun" membedakan rumput pengganggu dan daun sayur.',
+                homeAct: 'Mendampingi anak membersihkan daun kering dan rumput liar di sekitar pot.'
+            },
+            {
+                id: 5,
+                title: '5. Sayur Tumbuh Subur',
+                emoji: '🥬',
+                objective: 'Mengamati siklus sains pertumbuhan dan memupuk rasa syukur atas ciptaan Tuhan.',
+                schoolAct: 'Mengukur tinggi daun sayur menggunakan penggaris kayu atau jepitan kertas.',
+                homeAct: 'Mengambil foto perkembangan tanaman anak dari minggu ke minggu (jurnal tumbuh).'
+            },
+            {
+                id: 6,
+                title: '6. Memetik Sayur',
+                emoji: '🧺',
+                objective: 'Merasakan kegembiraan memanen hasil usaha dan menghargai jerih payah berkebun.',
+                schoolAct: 'Aktivitas memetik sayur di kebun sekolah dan mengumpulkannya di keranjang bersama.',
+                homeAct: 'Mengajak anak memetik daun bayam/sawi segar yang siap diolah.'
+            },
+            {
+                id: 7,
+                title: '7. Memasak Sayur',
+                emoji: '🍳',
+                objective: 'Mengenal konsep gizi "Isi Piringku" dan menyukai konsumsi sayuran sehat.',
+                schoolAct: 'Kegiatan cooking class sederhana membuat sup sayur segar bersama ibu guru.',
+                homeAct: 'Melibatkan anak mempetiki sayur dan mencuci daunnya sebelum dimasak di dapur.'
+            }
+        ];
+
+        // Rubric Assessment Data
+        const rubricData = {
+            'BB': {
+                code: 'BB (Belum Berkembang)',
+                color: 'text-rose-600 bg-rose-50 border-rose-200',
+                description: 'Anak belum dapat menemukan Kartu Judul dan memerlukan bimbingan penuh dari pendidik/orang tua untuk mengurutkan kartu proses berkebun.',
+                recommendation: 'Mulailah dengan 2–3 kartu terlebih dahulu (Judul -> Memberi Pupuk -> Menanam Bibit) sambil menceritakan alur cerita berkebun.'
+            },
+            'MB': {
+                code: 'MB (Mulai Berkembang)',
+                color: 'text-amber-600 bg-amber-50 border-amber-200',
+                description: 'Anak mampu menemukan Kartu Judul dan mengurutkan 3–4 kartu berkebun dengan pancingan pertanyaan atau petunjuk visual.',
+                recommendation: 'Ajak anak membayangkan kronologi apa yang dilakukan dari memberi pupuk, menyiram, hingga tanaman tumbuh.'
+            },
+            'BSH': {
+                code: 'BSH (Berkembang Sesuai Harapan)',
+                color: 'text-blue-600 bg-blue-50 border-blue-200',
+                description: 'Anak dapat mengurutkan 8 kartu berantai secara mandiri dan benar mulai dari Kartu Judul hingga Memasak Sayur.',
+                recommendation: 'Minta anak menceritakan alasan mengapa rumput harus dicabut sebelum sayur dipetik.'
+            },
+            'BSB': {
+                code: 'BSB (Berkembang Sangat Baik)',
+                color: 'text-green-600 bg-green-50 border-green-200',
+                description: 'Anak mampu mengurutkan 8 kartu secara mandiri serta menceritakan pengalaman bahagianya saat merawat tanaman atau makan sayur.',
+                recommendation: 'Diberikan peran sebagai "Ketua Dokter Tanaman" di kelas untuk mendampingi teman-temannya.'
+            }
+        };
+
+        // Navigation State Management
+        let currentTab = 'overview';
+        let tabHistory = ['overview'];
+
+        // Game State Variables
+        let placedSlots = Array(8).fill(null);
+        let poolCards = [];
+
+        // Chart References
+        let timelineChart = null;
+        let cpChart = null;
+
+        // Application Initialization
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSavedImagesFromStorage();
+            initGame();
+            renderSummaryCards();
+            renderHabitStation();
+            selectRubric('BSB');
+            initCharts();
+        });
+
+        let modalStorageNotice = null;
+
+        // ================= CUSTOM IMAGE MANAGER & LOCALSTORAGE =================
+        function loadSavedImagesFromStorage() {
+            cardMasterData.forEach(card => {
+                try {
+                    const savedImg = localStorage.getItem(`kebun_sayur_img_${card.id}`);
+                    if (savedImg) {
+                        card.customImg = savedImg;
+                    }
+                } catch (e) {
+                    console.warn('Gagal memuat gambar tersimpan:', e);
+                }
+            });
+        }
+
+        function openUploadModal() {
+            modalStorageNotice = null;
+            renderModalUploadGrid();
+            document.getElementById('image-upload-modal').classList.remove('hidden');
+        }
+
+        function closeUploadModal() {
+            document.getElementById('image-upload-modal').classList.add('hidden');
+            renderSummaryCards();
+            renderGameBoard();
+            renderHabitStation();
+        }
+
+        function renderModalUploadGrid() {
+            const container = document.getElementById('modal-card-upload-list');
+            if (!container) return;
+            container.innerHTML = '';
+
+            if (modalStorageNotice) {
+                const noticeBanner = document.createElement('div');
+                noticeBanner.className = "col-span-full p-3 bg-amber-100 border border-amber-300 text-amber-900 text-xs rounded-2xl mb-2 font-semibold flex items-center justify-between";
+                noticeBanner.innerHTML = `
+                    <span>${modalStorageNotice}</span>
+                    <button onclick="modalStorageNotice=null; renderModalUploadGrid();" class="text-amber-700 font-bold ml-2 text-sm">✕</button>
+                `;
+                container.appendChild(noticeBanner);
+            }
+
+            cardMasterData.forEach(card => {
+                const item = document.createElement('div');
+                item.className = "bg-white p-3.5 rounded-2xl border border-stone-200 shadow-sm flex items-center justify-between gap-3";
+                
+                const previewContent = card.customImg 
+                    ? `<img src="${card.customImg}" class="w-12 h-12 rounded-xl object-cover border border-stone-300 shadow-sm">`
+                    : `<div class="w-12 h-12 rounded-xl bg-stone-100 flex items-center justify-center text-2xl border border-stone-200">${card.emoji}</div>`;
+
+                item.innerHTML = `
+                    <div class="flex items-center gap-3 overflow-hidden">
+                        ${previewContent}
+                        <div class="overflow-hidden">
+                            <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-stone-100 text-stone-600 block w-fit mb-0.5">
+                                ${card.id === 0 ? 'Kartu 0' : 'Rutinitas ' + card.id}
+                            </span>
+                            <h4 class="text-xs font-bold text-slate-800 truncate">${card.shortName}</h4>
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-1 items-end shrink-0">
+                        <label class="cursor-pointer bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-[11px] px-3 py-1.5 rounded-xl shadow-sm transition-all text-center">
+                            <span>📸 Pilih Foto</span>
+                            <input type="file" accept="image/*" class="hidden" onchange="handleImageUpload(${card.id}, event)">
+                        </label>
+                        ${card.customImg ? `<button onclick="removeCustomImage(${card.id})" class="text-[10px] font-semibold text-rose-500 hover:underline">Hapus Foto</button>` : ''}
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function handleImageUpload(cardId, event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    // Create an offscreen canvas to scale and compress the image
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 400;
+                    const MAX_HEIGHT = 400;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height = Math.round(height * (MAX_WIDTH / width));
+                            width = MAX_WIDTH;
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width = Math.round(width * (MAX_HEIGHT / height));
+                            height = MAX_HEIGHT;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    // Compress image to JPEG (quality 0.7) to dramatically shrink storage footprint
+                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                    cardMasterData[cardId].customImg = compressedBase64;
+
+                    try {
+                        localStorage.setItem(`kebun_sayur_img_${cardId}`, compressedBase64);
+                        modalStorageNotice = "✅ Gambar berhasil dikompresi dan disimpan!";
+                    } catch (err) {
+                        console.warn('LocalStorage quota exceeded:', err);
+                        modalStorageNotice = "⚠️ Penyimpanan browser penuh. Gambar aktif untuk sesi ini, namun tidak tersimpan permanen.";
+                    }
+
+                    renderModalUploadGrid();
+                    playAudioTone(580, 'sine', 0.1);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeCustomImage(cardId) {
+            cardMasterData[cardId].customImg = null;
+            try {
+                localStorage.removeItem(`kebun_sayur_img_${cardId}`);
+            } catch (e) {
+                console.warn(e);
+            }
+            modalStorageNotice = "Gambar kartu telah dihapus.";
+            renderModalUploadGrid();
+            playAudioTone(320, 'triangle', 0.1);
+        }
+
+        function clearAllCustomImages() {
+            cardMasterData.forEach(card => {
+                card.customImg = null;
+                try {
+                    localStorage.removeItem(`kebun_sayur_img_${card.id}`);
+                } catch (e) {
+                    console.warn(e);
+                }
+            });
+            modalStorageNotice = "Semua gambar kartu berhasil di-reset ke default.";
+            renderModalUploadGrid();
+        }
+
+        // Fungsi Sinkronisasi Data & Gambar Manual
+        function manualSyncData() {
+            loadSavedImagesFromStorage();
+            syncGameCardImages();
+            renderSummaryCards();
+            renderGameBoard();
+            renderHabitStation();
+            playAudioTone(640, 'sine', 0.2);
+            
+            // Tampilkan notifikasi toast sinkronisasi
+            const toast = document.createElement('div');
+            toast.className = "fixed bottom-5 right-5 bg-teal-600 text-white px-4 py-3 rounded-2xl shadow-xl z-50 text-xs font-extrabold flex items-center gap-2 transition-all animate-bounce";
+            toast.innerHTML = "<span>🔄</span> Data & Gambar Berhasil Disinkronkan!";
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2500);
+        }
+
+        // Navigation Switcher
+        function switchTab(tabId, pushHistory = true) {
+            if (tabId === currentTab) return;
+
+            if (pushHistory) {
+                tabHistory.push(tabId);
+            }
+
+            currentTab = tabId;
+            const sections = ['overview', 'station1', 'station2', 'assessment'];
+
+            sections.forEach(sec => {
+                const el = document.getElementById(`sec-${sec}`);
+                const btn = document.getElementById(`tab-${sec}`);
+                if (sec === tabId) {
+                    el.classList.remove('hidden');
+                    if (btn) btn.className = "nav-btn px-3.5 py-2 rounded-xl bg-sky-600 text-white transition-all shadow-sm flex items-center gap-1.5 font-bold";
+                } else {
+                    el.classList.add('hidden');
+                    if (btn) btn.className = "nav-btn px-3.5 py-2 rounded-xl bg-stone-100 text-slate-600 hover:bg-stone-200 transition-all flex items-center gap-1.5 font-semibold";
+                }
+            });
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function goBack() {
+            if (tabHistory.length > 1) {
+                tabHistory.pop();
+                const previous = tabHistory[tabHistory.length - 1];
+                switchTab(previous, false);
+            } else {
+                switchTab('overview', false);
+            }
+        }
+
+        function goHome() {
+            tabHistory = ['overview'];
+            switchTab('overview', false);
+        }
+
+        function renderSummaryCards() {
+            const container = document.getElementById('summary-cards-grid');
+            if (!container) return;
+            container.innerHTML = '';
+
+            cardMasterData.forEach(card => {
+                const visualNode = card.customImg 
+                    ? `<img src="${card.customImg}" class="w-12 h-12 rounded-xl object-cover shadow-sm mb-1">`
+                    : `<span class="text-2xl mb-1">${card.emoji}</span>`;
+
+                const el = document.createElement('div');
+                el.className = "bg-stone-50 border border-stone-200 p-2.5 rounded-2xl text-center flex flex-col items-center justify-center min-h-[110px]";
+                el.innerHTML = `
+                    ${visualNode}
+                    <span class="text-[9px] font-black text-sky-800 uppercase">
+                        ${card.id === 0 ? 'Kartu 0' : 'Rutinitas ' + card.id}
+                    </span>
+                    <span class="text-[11px] font-bold text-slate-800 leading-tight mt-0.5">${card.shortName}</span>
+                `;
+                container.appendChild(el);
+            });
+        }
+
+
+        // ================= STASIUN 1: PERMAINAN KARTU BERANTAI LOGIC =================
+        function initGame() {
+            placedSlots = Array(8).fill(null);
+            poolCards = cardMasterData.map(c => ({...c}));
+            shuffleCardsInPool();
+            renderGameBoard();
+            hideGameFeedback();
+        }
+
+        function shuffleCardsInPool() {
+            for (let i = poolCards.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [poolCards[i], poolCards[j]] = [poolCards[j], poolCards[i]];
+            }
+        }
+
+        function shuffleCardsGame() {
+            initGame();
+            playAudioTone(440, 'sine', 0.15);
+        }
+
+        function resetChainGame() {
+            initGame();
+        }
+
+        function syncGameCardImages() {
+            if (typeof poolCards !== 'undefined' && Array.isArray(poolCards)) {
+                poolCards.forEach(card => {
+                    if (card && cardMasterData[card.id]) {
+                        card.customImg = cardMasterData[card.id].customImg;
+                    }
+                });
+            }
+            if (typeof placedSlots !== 'undefined' && Array.isArray(placedSlots)) {
+                placedSlots.forEach(card => {
+                    if (card && cardMasterData[card.id]) {
+                        card.customImg = cardMasterData[card.id].customImg;
+                    }
+                });
+            }
+        }
+
+        function renderGameBoard() {
+            syncGameCardImages();
+            // Render Slots Track (0 to 7)
+            const trackContainer = document.getElementById('chain-track-container');
+            if (!trackContainer) return;
+            trackContainer.innerHTML = '';
+
+            let filledCount = 0;
+
+            for (let i = 0; i < 8; i++) {
+                const slotCard = placedSlots[i];
+                const slotEl = document.createElement('div');
+
+                if (slotCard !== null) {
+                    filledCount++;
+                    const cardVisual = slotCard.customImg 
+                        ? `<img src="${slotCard.customImg}" class="w-14 h-14 rounded-xl object-cover my-1 shadow-sm border border-white/50">`
+                        : `<span class="text-3xl my-1">${slotCard.emoji}</span>`;
+
+                    slotEl.className = `p-2.5 rounded-2xl border-2 ${slotCard.borderColor} ${slotCard.bgColor} text-white shadow-md flex flex-col justify-between items-center text-center cursor-pointer hover:scale-105 transition-transform relative group`;
+                    slotEl.onclick = () => removeCardFromSlot(i);
+                    slotEl.innerHTML = `
+                        <span class="absolute -top-2 -left-2 w-6 h-6 rounded-full bg-white text-slate-800 text-[10px] font-black flex items-center justify-center shadow-md border">
+                            ${i}
+                        </span>
+                        ${cardVisual}
+                        <span class="text-[11px] font-extrabold leading-tight">${slotCard.shortName}</span>
+                        <span class="text-[9px] opacity-80 mt-1 font-semibold group-hover:underline">Lepas</span>
+                    `;
+                } else {
+                    slotEl.className = `p-2.5 rounded-2xl border-2 border-dashed border-sky-300 bg-white/80 flex flex-col justify-center items-center text-center text-stone-400 min-h-[140px]`;
+                    slotEl.innerHTML = `
+                        <span class="w-6 h-6 rounded-full bg-sky-100 text-sky-800 text-[10px] font-black flex items-center justify-center mb-1">
+                            ${i}
+                        </span>
+                        <span class="text-[10px] font-bold text-sky-800 uppercase">
+                            ${i === 0 ? 'Kartu Judul' : 'Rutinitas ' + i}
+                        </span>
+                        <span class="text-[9px] text-stone-400 mt-1">Kosong</span>
+                    `;
+                }
+                trackContainer.appendChild(slotEl);
+            }
+
+            document.getElementById('placed-counter').innerText = `Tersusun: ${filledCount} / 8 Kartu`;
+
+            // Render Shuffled Cards Pool
+            const poolContainer = document.getElementById('shuffled-pool-container');
+            if (!poolContainer) return;
+            poolContainer.innerHTML = '';
+
+            if (poolCards.length === 0) {
+                poolContainer.innerHTML = `
+                    <div class="col-span-full py-6 text-center text-xs font-bold text-slate-500 italic">
+                        Semua 8 kartu telah dimasukkan ke dalam Rantai! Klik tombol "Periksa Rantai Kartu" di bawah.
+                    </div>
+                `;
+            } else {
+                poolCards.forEach((card, index) => {
+                    const cardVisual = card.customImg 
+                        ? `<img src="${card.customImg}" class="w-12 h-12 rounded-xl object-cover mb-1 shadow-sm group-hover:scale-110 transition-transform">`
+                        : `<span class="text-3xl mb-1 group-hover:scale-110 transition-transform">${card.emoji}</span>`;
+
+                    const cardEl = document.createElement('div');
+                    cardEl.className = `p-2.5 rounded-2xl border-2 border-stone-200 bg-white hover:border-sky-400 cursor-pointer shadow-sm hover:shadow-md transition-all flex flex-col items-center justify-between text-center group active:scale-95 min-h-[130px]`;
+                    cardEl.onclick = () => placeCardInTrack(index);
+                    cardEl.innerHTML = `
+                        ${cardVisual}
+                        <span class="text-xs font-extrabold text-slate-800 leading-tight">${card.shortName}</span>
+                        <span class="text-[9px] text-sky-600 font-bold mt-1 bg-sky-50 px-2 py-0.5 rounded-md">Pilih</span>
+                    `;
+                    poolContainer.appendChild(cardEl);
+                });
+            }
+        }
+
+        function placeCardInTrack(poolIndex) {
+            const emptySlotIndex = placedSlots.findIndex(slot => slot === null);
+            if (emptySlotIndex !== -1) {
+                const selectedCard = poolCards.splice(poolIndex, 1)[0];
+                placedSlots[emptySlotIndex] = selectedCard;
+                renderGameBoard();
+                hideGameFeedback();
+                playAudioTone(520, 'sine', 0.1);
+            }
+        }
+
+        function removeCardFromSlot(slotIndex) {
+            const removedCard = placedSlots[slotIndex];
+            if (removedCard) {
+                placedSlots[slotIndex] = null;
+                poolCards.push(removedCard);
+                renderGameBoard();
+                hideGameFeedback();
+                playAudioTone(350, 'triangle', 0.1);
+            }
+        }
+
+        function checkCardChain() {
+            const feedbackEl = document.getElementById('game-feedback-banner');
+            feedbackEl.classList.remove('hidden');
+
+            const isAllFilled = placedSlots.every(slot => slot !== null);
+            if (!isAllFilled) {
+                feedbackEl.className = "p-4 rounded-2xl text-center font-extrabold text-xs sm:text-sm bg-amber-100 text-amber-900 border border-amber-300 shadow-sm";
+                feedbackEl.innerHTML = "⚠️ Masih ada slot rantai yang kosong! Masukkan semua 8 kartu berkebun terlebih dahulu ya.";
+                playAudioTone(300, 'sawtooth', 0.2);
+                return;
+            }
+
+            let isCorrect = true;
+            let wrongIndex = -1;
+
+            for (let i = 0; i < 8; i++) {
+                if (placedSlots[i].id !== i) {
+                    isCorrect = false;
+                    wrongIndex = i;
+                    break;
+                }
+            }
+
+            if (isCorrect) {
+                feedbackEl.className = "p-4 rounded-2xl text-center font-extrabold text-xs sm:text-sm bg-emerald-100 text-emerald-900 border border-emerald-300 shadow-sm";
+                feedbackEl.innerHTML = "🎉 HEBAT SEKALIK! 🥦 Rantai 8 Kartu 'Kebun Sayurku yang Subur' tersusun sempurna dari Kartu Judul hingga Memasak Sayur!";
+                playAudioTone(600, 'sine', 0.3);
+            } else {
+                feedbackEl.className = "p-4 rounded-2xl text-center font-extrabold text-xs sm:text-sm bg-rose-100 text-rose-900 border border-rose-300 shadow-sm";
+                feedbackEl.innerHTML = `❌ Kartu pada urutan ke-${wrongIndex} belum tepat. Kartu Judul harus berada di posisi 0, lalu diikuti urutan Memberi Pupuk hingga Memasak Sayur!`;
+                playAudioTone(220, 'sawtooth', 0.25);
+            }
+        }
+
+        function hideGameFeedback() {
+            document.getElementById('game-feedback-banner').classList.add('hidden');
+        }
+
+
+        // ================= STASIUN 2: EKSPLORASI DETAIL LOGIC =================
+        function renderHabitStation() {
+            const container = document.getElementById('habit-cards-grid');
+            if (!container) return;
+            container.innerHTML = '';
+
+            habitDetails.forEach(item => {
+                const masterCard = cardMasterData.find(c => c.id === item.id);
+                const visualNode = (masterCard && masterCard.customImg) 
+                    ? `<img src="${masterCard.customImg}" class="w-12 h-12 rounded-2xl object-cover shadow-sm">`
+                    : `<div class="w-12 h-12 rounded-2xl bg-white border border-stone-200 flex items-center justify-center text-2xl shadow-sm">${item.emoji}</div>`;
+
+                const card = document.createElement('div');
+                card.className = "bg-stone-50 border border-stone-200 rounded-3xl p-5 space-y-3 hover:shadow-md transition-all";
+                card.innerHTML = `
+                    <div class="flex items-center gap-3 border-b border-stone-200 pb-3">
+                        ${visualNode}
+                        <div>
+                            <h3 class="font-extrabold text-sm text-slate-800">${item.title}</h3>
+                            <span class="text-[10px] font-bold text-sky-700 bg-sky-100 px-2 py-0.5 rounded-full">Kemandirian PAUD</span>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-2 text-xs">
+                        <div class="bg-white p-3 rounded-2xl border border-stone-200">
+                            <strong class="text-amber-800 block mb-0.5">🎯 Tujuan Pembiasaan:</strong>
+                            <p class="text-slate-600">${item.objective}</p>
+                        </div>
+                        <div class="bg-white p-3 rounded-2xl border border-stone-200">
+                            <strong class="text-sky-800 block mb-0.5">🏠 Pembiasaan di Rumah:</strong>
+                            <p class="text-slate-600">${item.homeAct}</p>
+                        </div>
+                        <div class="bg-white p-3 rounded-2xl border border-stone-200">
+                            <strong class="text-emerald-800 block mb-0.5">🏫 Aktivitas Koneksi di Sekolah:</strong>
+                            <p class="text-slate-600">${item.schoolAct}</p>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+
+        // ================= ASESMEN & RUBRIK LOGIC =================
+        function selectRubric(code) {
+            const buttons = document.querySelectorAll('.rubric-btn');
+            buttons.forEach(btn => {
+                btn.classList.remove('border-2', 'border-sky-500', 'bg-sky-50/40', 'border-brandGreen', 'bg-green-50/40');
+                btn.classList.add('border', 'border-stone-200', 'bg-stone-50');
+            });
+
+            const activeBtn = document.getElementById(`rubric-btn-${code}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('border-stone-200', 'bg-stone-50');
+                activeBtn.classList.add('border-2', 'border-sky-500', 'bg-sky-50/40');
+            }
+
+            const data = rubricData[code];
+            const detailCard = document.getElementById('rubric-detail-card');
+            detailCard.innerHTML = `
+                <div class="flex items-center justify-between mb-3">
+                    <span class="px-3 py-1 rounded-full text-xs font-black ${data.color}">
+                        Skala: ${data.code}
+                    </span>
+                </div>
+                <h3 class="font-extrabold text-slate-800 text-xs sm:text-sm mb-2">Deskripsi Perkembangan Anak:</h3>
+                <p class="text-xs text-slate-600 leading-relaxed mb-4">${data.description}</p>
+                <div class="bg-white p-3.5 rounded-2xl border border-stone-200">
+                    <strong class="text-xs font-extrabold text-sky-800 block mb-1">💡 Tips Bimbingan Pendidik / Orang Tua:</strong>
+                    <p class="text-xs text-slate-600">${data.recommendation}</p>
+                </div>
+            `;
+        }
+
+
+        // ================= CHART.JS VISUALIZATIONS =================
+        function initCharts() {
+            // Chart 1: Gardening Timeline
+            const ctxTimeline = document.getElementById('chart-morning-timeline').getContext('2d');
+            timelineChart = new Chart(ctxTimeline, {
+                type: 'bar',
+                data: {
+                    labels: ['Memberi Pupuk', 'Menanam Bibit', 'Menyiram Sayur', 'Mencabut Rumput', 'Tumbuh Subur', 'Memetik Sayur', 'Memasak Sayur'],
+                    datasets: [{
+                        label: 'Estimasi Hari / Waktu Aktivitas',
+                        data: [1, 1, 7, 3, 14, 1, 1],
+                        backgroundColor: ['#D97706', '#16A34A', '#0284C7', '#65A30D', '#14B8A6', '#F97316', '#EF4444'],
+                        borderRadius: 12
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` Alokasi/Periode: ${context.raw} Hari/Sesi`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { precision: 0 }
+                        }
+                    }
+                }
+            });
+
+            // Chart 2: Capaian Pembelajaran (CP) Distribution
+            const ctxCP = document.getElementById('chart-cp-domains').getContext('2d');
+            cpChart = new Chart(ctxCP, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Sains & Literasi-STEAM (Siklus Tumbuhan)', 'Jati Diri (Kemandirian Motorik & Olahan Sehat)', 'Nilai Agama & Budi Pekerti (Rasa Syukur Alam)'],
+                    datasets: [{
+                        data: [4, 2, 2],
+                        backgroundColor: ['#10B981', '#F59E0B', '#0284C7'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                font: { size: 10 }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Web Audio Synth Generator for Interactive Feedback
+        function playAudioTone(freq, type, duration) {
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (!AudioCtx) return;
+                const ctx = new AudioCtx();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+
+                osc.type = type || 'sine';
+                osc.frequency.setValueAtTime(freq, ctx.currentTime);
+                gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                osc.start();
+                osc.stop(ctx.currentTime + duration);
+            } catch (e) {
+                // Silent catch if audio context is blocked
+            }
+        }
+    </script>
+</body>
+</html>

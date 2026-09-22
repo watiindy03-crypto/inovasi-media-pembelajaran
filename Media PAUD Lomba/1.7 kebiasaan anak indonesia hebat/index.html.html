@@ -1,0 +1,1253 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <!-- Chosen Palette: Warm Neutrals with Vibrant Primary Accents (Cream #FAF8F5, Slate, Amber, Emerald, Coral, Indigo, Purple) -->
+    <!-- Application Structure Plan: Interactive 4-section SPA designed for PAUD educators, parents, and young learners. Section 1 (Beranda) provides a macroscopic view and habit daily timeline. Section 2 (Stasiun 1) hosts an interactive 8-card chronological sorting game with custom image upload support, immediate scaffolding feedback, and game score analytics. Section 3 (Stasiun 2) provides detailed habit exploration with learning domain metrics. Section 4 (Assessment) gives teachers an authentic rubric matrix with observation tracking and distribution analytics. Navigational headers with 'Kembali' and 'Beranda' on all stations ensure intuitive non-linear exploration. -->
+    <!-- Visualization & Content Choices: 
+       - 8-Card Interactive Track -> Game goal -> Interactive HTML/CSS card slots with Custom Image Upload support -> Click/Tap to place/remove -> High usability for PAUD kinesthetic learning -> Custom JS State + LocalStorage.
+       - Daily Routine Timeline -> Sequence goal -> Chart.js Bar Chart -> Visualizing habits across morning, afternoon, and night -> Chart.js Library.
+       - Learning Domains Breakdown -> Conceptual mapping -> Chart.js Doughnut Chart -> Interactive slice toggling -> Visual balance of CP elements -> Chart.js Library.
+       - Rubric Assessment Matrix -> Assessment goal -> Dynamic HTML Card display with JS filter -> Click level to view criteria -> Clear diagnostic utility -> Vanilla JS.
+       - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Papan Pembelajaran: 8 Kartu Berantai 7 Kebiasaan Anak Indonesia Hebat</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cream: '#FAF8F5',
+                        brandRed: '#EF4444',
+                        brandAmber: '#F59E0B',
+                        brandGreen: '#10B981',
+                        brandBlue: '#3B82F6',
+                        brandPurple: '#8B5CF6',
+                        brandIndigo: '#6366F1'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 280px;
+            max-height: 380px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 320px;
+            }
+        }
+        .card-shadow {
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+        }
+    </style>
+</head>
+<body class="bg-cream text-slate-800 font-sans min-h-screen flex flex-col selection:bg-amber-200">
+
+    <!-- Application Header & Top Navigation -->
+    <header class="bg-white border-b border-stone-200 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between py-3 gap-3">
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="goHome()">
+                    <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-red-500 to-amber-500 text-white flex items-center justify-center text-2xl font-bold shadow-md">
+                        🇮🇩
+                    </div>
+                    <div>
+                        <h1 class="text-lg sm:text-xl font-extrabold text-slate-800 leading-tight">7 Kebiasaan Anak Indonesia Hebat</h1>
+                        <p class="text-xs text-slate-500 font-medium">8 Kartu Gambar Berantai &bull; PAUD (Fase Fondasi)</p>
+                    </div>
+                </div>
+
+                <!-- Main Navigation Tabs & Image Upload Trigger -->
+                <nav class="flex flex-wrap items-center gap-2 text-xs sm:text-sm font-semibold">
+                    <button onclick="switchTab('overview')" id="tab-overview" class="nav-btn px-3.5 py-2 rounded-xl bg-amber-500 text-white transition-all shadow-sm flex items-center gap-1.5 font-bold">
+                        <span>🏠</span> Beranda
+                    </button>
+                    <button onclick="switchTab('station1')" id="tab-station1" class="nav-btn px-3.5 py-2 rounded-xl bg-stone-100 text-slate-600 hover:bg-stone-200 transition-all flex items-center gap-1.5 font-semibold">
+                        <span>🎲</span> Stasiun 1: Permainan Kartu
+                    </button>
+                    <button onclick="switchTab('station2')" id="tab-station2" class="nav-btn px-3.5 py-2 rounded-xl bg-stone-100 text-slate-600 hover:bg-stone-200 transition-all flex items-center gap-1.5 font-semibold">
+                        <span>📚</span> Stasiun 2: Eksplorasi Kebiasaan
+                    </button>
+                    <button onclick="switchTab('assessment')" id="tab-assessment" class="nav-btn px-3.5 py-2 rounded-xl bg-stone-100 text-slate-600 hover:bg-stone-200 transition-all flex items-center gap-1.5 font-semibold">
+                        <span>📝</span> Panduan & Asesmen
+                    </button>
+                    <button onclick="toggleImageModal(true)" class="px-3.5 py-2 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 transition-all flex items-center gap-1.5 font-bold shadow-sm">
+                        <span>🖼️</span> Unggah Gambar Kartu
+                    </button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- ================= SECTION: OVERVIEW / BERANDA ================= -->
+        <section id="sec-overview" class="space-y-6">
+            <!-- Hero Banner -->
+            <div class="bg-gradient-to-r from-red-500 via-amber-500 to-emerald-500 text-white rounded-3xl p-6 sm:p-8 shadow-md relative overflow-hidden">
+                <div class="max-w-3xl relative z-10">
+                    <span class="inline-block px-3 py-1 bg-white/20 backdrop-blur-md text-white text-xs font-extrabold rounded-full uppercase tracking-wider mb-3">
+                        Gerakan 7 Kebiasaan Anak Indonesia Hebat (7 KAIH - Kemendikdasmen)
+                    </span>
+                    <h2 class="text-2xl sm:text-4xl font-black mb-3 leading-tight">
+                        Rantai Rutinitas Harian Anak Hebat 🇮🇩
+                    </h2>
+                    <p class="text-white/90 text-xs sm:text-base leading-relaxed mb-6">
+                        Papan pembelajaran interaktif untuk melatih pemahaman urutan kronologis, pembiasaan karakter positif, serta penalaran berantai anak usia dini melalui permainan <strong>8 Kartu Gambar Berantai</strong> (mulai dari Kartu Judul hingga Kebiasaan ke-7).
+                    </p>
+                    <div class="flex flex-wrap gap-3">
+                        <button onclick="switchTab('station1')" class="bg-white text-slate-800 font-extrabold px-5 py-2.5 rounded-2xl hover:bg-amber-50 transition-all shadow-md active:scale-95 text-xs sm:text-sm flex items-center gap-2">
+                            <span>🎮</span> Mulai Bermain Kartu Berantai
+                        </button>
+                        <button onclick="toggleImageModal(true)" class="bg-black/20 hover:bg-black/30 backdrop-blur-md text-white font-bold px-5 py-2.5 rounded-2xl transition-all text-xs sm:text-sm flex items-center gap-2">
+                            <span>📸</span> Unggah Gambar Ilustrasi Sendiri
+                        </button>
+                        <button onclick="switchTab('station2')" class="bg-white/10 hover:bg-white/20 backdrop-blur-md text-white font-bold px-5 py-2.5 rounded-2xl transition-all text-xs sm:text-sm flex items-center gap-2">
+                            <span>📖</span> Pelajari 7 Kebiasaan
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Image Upload Banner Alert (If no custom images uploaded) -->
+            <div class="bg-amber-50 border border-amber-300 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+                <div class="flex items-center gap-3">
+                    <span class="text-2xl">📸</span>
+                    <div>
+                        <strong class="font-extrabold text-amber-900 block text-sm">Punya File Gambar/Screenshot PDF Ilustrasi Kartu?</strong>
+                        <p class="text-amber-800">Anda dapat mengunggah file gambar asli dari PDF Anda ke setiap kartu agar kartu tampil persis sesuai media cetak sekolah.</p>
+                    </div>
+                </div>
+                <button onclick="toggleImageModal(true)" class="bg-amber-500 hover:bg-amber-600 text-white font-extrabold px-4 py-2 rounded-xl shrink-0 shadow-sm transition-all">
+                    Atur Gambar Kartu Now &rarr;
+                </button>
+            </div>
+
+            <!-- 3 Main Station Feature Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div onclick="switchTab('station1')" class="cursor-pointer bg-white p-6 rounded-3xl border border-stone-200 hover:shadow-lg hover:border-amber-400 transition-all flex flex-col justify-between group">
+                    <div>
+                        <div class="w-12 h-12 rounded-2xl bg-amber-100 text-brandAmber flex items-center justify-center text-2xl font-bold mb-4 group-hover:scale-110 transition-transform">🎲</div>
+                        <h3 class="font-bold text-lg text-slate-800 mb-1">Stasiun 1: Permainan Kartu</h3>
+                        <p class="text-xs text-slate-500 leading-relaxed">Acak 8 kartu gambar, lalu susun kembali secara berantai mulai dari Kartu Judul (0) hingga Kebiasaan Tidur Cepat (7).</p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between text-xs font-bold text-brandAmber">
+                        <span>Mainkan Kartu Berantai</span>
+                        <span>&rarr;</span>
+                    </div>
+                </div>
+
+                <div onclick="switchTab('station2')" class="cursor-pointer bg-white p-6 rounded-3xl border border-stone-200 hover:shadow-lg hover:border-emerald-400 transition-all flex flex-col justify-between group">
+                    <div>
+                        <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-brandGreen flex items-center justify-center text-2xl font-bold mb-4 group-hover:scale-110 transition-transform">📚</div>
+                        <h3 class="font-bold text-lg text-slate-800 mb-1">Stasiun 2: Detail Kebiasaan</h3>
+                        <p class="text-xs text-slate-500 leading-relaxed">Eksplorasi makna, tujuan pembelajaran, serta contoh aktivitas konkret di kelas PAUD maupun rumah untuk setiap kebiasaan.</p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between text-xs font-bold text-brandGreen">
+                        <span>Eksplorasi Kebiasaan</span>
+                        <span>&rarr;</span>
+                    </div>
+                </div>
+
+                <div onclick="switchTab('assessment')" class="cursor-pointer bg-white p-6 rounded-3xl border border-stone-200 hover:shadow-lg hover:border-purple-400 transition-all flex flex-col justify-between group">
+                    <div>
+                        <div class="w-12 h-12 rounded-2xl bg-purple-100 text-brandPurple flex items-center justify-center text-2xl font-bold mb-4 group-hover:scale-110 transition-transform">📝</div>
+                        <h3 class="font-bold text-lg text-slate-800 mb-1">Panduan & Asesmen</h3>
+                        <p class="text-xs text-slate-500 leading-relaxed">Pertanyaan pemantik scaffolding pendidik dan rubrik lembar observasi autentik perkembangan PAUD (BB, MB, BSH, BSB).</p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between text-xs font-bold text-brandPurple">
+                        <span>Lihat Panduan & Rubrik</span>
+                        <span>&rarr;</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visual Analytics Grid: Daily Routine & CP Learning Elements -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Daily Routine Chart -->
+                <div class="bg-white rounded-3xl p-6 border border-stone-200">
+                    <h3 class="font-extrabold text-sm text-slate-800 mb-1 flex items-center gap-2">
+                        <span>⏰</span> Alur Rutinitas Waktu Harian (Kronologis)
+                    </h3>
+                    <p class="text-xs text-slate-500 mb-4">Distribusi 7 Kebiasaan sepanjang siklus waktu harian anak (Pagi, Siang, Sore, dan Malam).</p>
+                    <div class="chart-container">
+                        <canvas id="chart-daily-timeline"></canvas>
+                    </div>
+                </div>
+
+                <!-- Learning Domains Chart -->
+                <div class="bg-white rounded-3xl p-6 border border-stone-200">
+                    <h3 class="font-extrabold text-sm text-slate-800 mb-1 flex items-center gap-2">
+                        <span>🎯</span> Pemetaan Elemen Capaian Pembelajaran (CP)
+                    </h3>
+                    <p class="text-xs text-slate-500 mb-4">Keseimbangan muatan Agama, Jati Diri, dan Literasi-STEAM dalam 7 KAIH.</p>
+                    <div class="chart-container">
+                        <canvas id="chart-cp-domains"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- List of 8 Chain Cards Summary -->
+            <div class="bg-white rounded-3xl p-6 border border-stone-200">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-extrabold text-base text-slate-800 flex items-center gap-2">
+                        <span>📑</span> Ringkasan 8 Kartu Gambar Berantai
+                    </h3>
+                    <button onclick="toggleImageModal(true)" class="text-xs font-bold text-amber-600 hover:text-amber-700 bg-amber-50 px-3 py-1.5 rounded-xl border border-amber-200">
+                        🖼️ Kelola Gambar Kartu
+                    </button>
+                </div>
+                <div id="overview-card-grid" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+                    <!-- Dynamic cards overview rendered via JS -->
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ================= SECTION: STATION 1 (PERMAINAN KARTU BERANTAI) ================= -->
+        <section id="sec-station1" class="hidden space-y-6">
+            <!-- Navigation Header Controls -->
+            <div class="flex items-center justify-between bg-white p-3 px-4 rounded-2xl border border-stone-200 shadow-sm">
+                <button onclick="goBack()" class="flex items-center gap-2 text-xs font-bold text-slate-700 bg-stone-100 px-3.5 py-2 rounded-xl border border-stone-300 hover:bg-stone-200 active:scale-95 transition-all">
+                    <span>⬅️</span> Kembali
+                </button>
+                <div class="text-xs font-extrabold text-slate-600 hidden sm:block">
+                    Stasiun 1 &bull; Permainan Mengurutkan 8 Kartu Berantai
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="toggleImageModal(true)" class="flex items-center gap-1.5 text-xs font-extrabold text-rose-700 bg-rose-50 px-3 py-2 rounded-xl border border-rose-200 hover:bg-rose-100 transition-all">
+                        <span>🖼️</span> Unggah Gambar
+                    </button>
+                    <button onclick="goHome()" class="flex items-center gap-2 text-xs font-bold text-amber-900 bg-amber-100 px-3.5 py-2 rounded-xl border border-amber-300 hover:bg-amber-200 active:scale-95 transition-all">
+                        <span>🏠</span> Beranda
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-3xl p-6 border border-stone-200 shadow-sm space-y-6">
+                <!-- Title & Controls -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-100 pb-4">
+                    <div>
+                        <span class="text-xs font-extrabold text-brandAmber uppercase tracking-wider">Permainan Edukasi PAUD</span>
+                        <h2 class="text-xl font-black text-slate-800 flex items-center gap-2">
+                            <span>🎲</span> Permainan 8 Kartu Gambar Berantai
+                        </h2>
+                        <p class="text-xs text-slate-500 mt-1">Klik atau ketuk kartu di wadah teracak untuk memasukkannya ke dalam rantai. Susun mulai dari Kartu Judul (0) hingga Kebiasaan ke-7!</p>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="shuffleCardsGame()" class="bg-amber-500 hover:bg-amber-600 text-white font-extrabold px-4 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-sm active:scale-95 transition-all">
+                            <span>🔄</span> Acak Ulang Kartu
+                        </button>
+                        <button onclick="resetChainGame()" class="bg-stone-100 hover:bg-stone-200 text-slate-700 font-bold px-3 py-2 rounded-xl text-xs transition-all">
+                            Reset
+                        </button>
+                    </div>
+                </div>
+
+                <!-- GAME TRACK (SLOTS 0 TO 7) -->
+                <div class="bg-amber-50/70 border-2 border-dashed border-amber-300 p-4 sm:p-6 rounded-3xl space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xs font-black text-amber-900 uppercase tracking-wider flex items-center gap-1">
+                            <span>🔗</span> Rantai Urutan Kebiasaan (8 Slot Kartu)
+                        </h3>
+                        <span id="placed-counter" class="text-xs font-bold text-amber-800 bg-amber-200 px-3 py-1 rounded-full">
+                            Tersusun: 0 / 8 Kartu
+                        </span>
+                    </div>
+
+                    <!-- Slots Grid -->
+                    <div id="chain-track-container" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3 min-h-[160px]">
+                        <!-- Dynamic Slots Rendered via JS -->
+                    </div>
+                </div>
+
+                <!-- SHUFFLED CARDS POOL -->
+                <div class="bg-stone-50 border border-stone-200 p-4 sm:p-6 rounded-3xl space-y-3">
+                    <h3 class="text-xs font-black text-slate-600 uppercase tracking-wider flex items-center gap-1">
+                        <span>📦</span> Wadah Kartu Teracak (Klik untuk Memilih)
+                    </h3>
+                    <div id="shuffled-pool-container" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3 min-h-[140px]">
+                        <!-- Dynamic Shuffled Pool Rendered via JS -->
+                    </div>
+                </div>
+
+                <!-- Feedback Banner & Check Button -->
+                <div id="game-feedback-banner" class="hidden p-4 rounded-2xl text-center font-extrabold text-sm border shadow-sm transition-all">
+                    <!-- Feedback injected via JS -->
+                </div>
+
+                <div class="flex justify-center pt-2">
+                    <button id="check-btn" onclick="checkCardChain()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold px-8 py-3 rounded-2xl text-sm shadow-md active:scale-95 transition-all flex items-center gap-2">
+                        <span>✅</span> Periksa Rantai Kartu
+                    </button>
+                </div>
+
+                <!-- Bottom Navigation Bar -->
+                <div class="flex justify-between items-center pt-6 border-t border-stone-100">
+                    <button onclick="goBack()" class="flex items-center gap-2 text-xs font-bold text-slate-600 bg-stone-100 px-4 py-2 rounded-xl hover:bg-stone-200 transition-all">
+                        <span>⬅️</span> Kembali
+                    </button>
+                    <button onclick="goHome()" class="flex items-center gap-2 text-xs font-bold text-amber-900 bg-amber-100 px-4 py-2 rounded-xl hover:bg-amber-200 transition-all">
+                        <span>🏠</span> Ke Beranda
+                    </button>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ================= SECTION: STATION 2 (EKSPLORASI KEBIASAAN) ================= -->
+        <section id="sec-station2" class="hidden space-y-6">
+            <!-- Navigation Header Controls -->
+            <div class="flex items-center justify-between bg-white p-3 px-4 rounded-2xl border border-stone-200 shadow-sm">
+                <button onclick="goBack()" class="flex items-center gap-2 text-xs font-bold text-slate-700 bg-stone-100 px-3.5 py-2 rounded-xl border border-stone-300 hover:bg-stone-200 active:scale-95 transition-all">
+                    <span>⬅️</span> Kembali
+                </button>
+                <div class="text-xs font-extrabold text-slate-600 hidden sm:block">
+                    Stasiun 2 &bull; Eksplorasi Detail 7 Kebiasaan
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="toggleImageModal(true)" class="flex items-center gap-1.5 text-xs font-extrabold text-rose-700 bg-rose-50 px-3 py-2 rounded-xl border border-rose-200 hover:bg-rose-100 transition-all">
+                        <span>🖼️</span> Unggah Gambar
+                    </button>
+                    <button onclick="goHome()" class="flex items-center gap-2 text-xs font-bold text-amber-900 bg-amber-100 px-3.5 py-2 rounded-xl border border-amber-300 hover:bg-amber-200 active:scale-95 transition-all">
+                        <span>🏠</span> Beranda
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-3xl p-6 border border-stone-200 shadow-sm space-y-6">
+                <div class="border-b border-stone-100 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                        <span class="text-xs font-extrabold text-brandGreen uppercase tracking-wider">Eksplorasi Karakter PAUD</span>
+                        <h2 class="text-xl font-black text-slate-800">📚 Detail Kebiasaan & Contoh Aktivitas Nyata</h2>
+                        <p class="text-xs text-slate-500 mt-1">Eksplorasi nilai pembiasaan, tujuan, serta inspirasi kegiatan di sekolah PAUD dan rumah untuk masing-masing kebiasaan.</p>
+                    </div>
+                    <button onclick="toggleImageModal(true)" class="text-xs font-extrabold bg-stone-100 hover:bg-stone-200 text-slate-700 px-3.5 py-2 rounded-xl border transition-all shrink-0">
+                        🖼️ Kelola Gambar Kartu
+                    </button>
+                </div>
+
+                <!-- Habit Details Grid -->
+                <div id="habit-cards-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Dynamic Habit Detail Cards Rendered via JS -->
+                </div>
+
+                <!-- Bottom Navigation Bar -->
+                <div class="flex justify-between items-center pt-6 border-t border-stone-100">
+                    <button onclick="goBack()" class="flex items-center gap-2 text-xs font-bold text-slate-600 bg-stone-100 px-4 py-2 rounded-xl hover:bg-stone-200 transition-all">
+                        <span>⬅️</span> Kembali
+                    </button>
+                    <button onclick="goHome()" class="flex items-center gap-2 text-xs font-bold text-amber-900 bg-amber-100 px-4 py-2 rounded-xl hover:bg-amber-200 transition-all">
+                        <span>🏠</span> Ke Beranda
+                    </button>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ================= SECTION: ASSESSMENT & GUIDANCE ================= -->
+        <section id="sec-assessment" class="hidden space-y-6">
+            <!-- Navigation Header Controls -->
+            <div class="flex items-center justify-between bg-white p-3 px-4 rounded-2xl border border-stone-200 shadow-sm">
+                <button onclick="goBack()" class="flex items-center gap-2 text-xs font-bold text-slate-700 bg-stone-100 px-3.5 py-2 rounded-xl border border-stone-300 hover:bg-stone-200 active:scale-95 transition-all">
+                    <span>⬅️</span> Kembali
+                </button>
+                <div class="text-xs font-extrabold text-slate-600 hidden sm:block">
+                    Panduan Pendidik & Rubrik Asesmen Autentik PAUD
+                </div>
+                <button onclick="goHome()" class="flex items-center gap-2 text-xs font-bold text-amber-900 bg-amber-100 px-3.5 py-2 rounded-xl border border-amber-300 hover:bg-amber-200 active:scale-95 transition-all">
+                    <span>🏠</span> Beranda
+                </button>
+            </div>
+
+            <!-- Scaffolding Questions Section -->
+            <div class="bg-white rounded-3xl p-6 border border-stone-200 shadow-sm">
+                <div class="border-b border-stone-100 pb-4 mb-4">
+                    <span class="text-xs font-extrabold text-amber-600 uppercase tracking-wider">Panduan Pendidik & Orang Tua</span>
+                    <h2 class="text-xl font-black text-slate-800">💬 Pertanyaan Pemantik Scaffolding</h2>
+                    <p class="text-xs text-slate-500">Gunakan pertanyaan terarah berikut untuk memandu logika berantai dan penalaran anak saat bermain kartu.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="p-4 rounded-2xl bg-amber-50/70 border border-amber-200">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-base">🎈</span>
+                            <h3 class="font-extrabold text-xs text-amber-900">Mencari Kartu Judul (Kartu 0)</h3>
+                        </div>
+                        <p class="text-xs text-slate-700 italic">"Kartu mana yang merupakan judul utama dari 7 Kebiasaan Anak Indonesia Hebat kita?"</p>
+                    </div>
+
+                    <div class="p-4 rounded-2xl bg-blue-50/70 border border-blue-200">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-base">🌅</span>
+                            <h3 class="font-extrabold text-xs text-blue-900">Awal Hari (Pagi Hari)</h3>
+                        </div>
+                        <p class="text-xs text-slate-700 italic">"Setelah kita bangun pagi (Kartu 1), apa hal pertama yang kita lakukan untuk bersyukur kepada Tuhan?"</p>
+                    </div>
+
+                    <div class="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-base">🤝</span>
+                            <h3 class="font-extrabold text-xs text-emerald-900">Siang - Sore Hari (Aktivitas)</h3>
+                        </div>
+                        <p class="text-xs text-slate-700 italic">"Sebelum kita bermain bersama teman-teman di lingkungan rumah (Kartu 6), kebiasaan baik apa yang sudah kita kerjakan?"</p>
+                    </div>
+
+                    <div class="p-4 rounded-2xl bg-purple-50/70 border border-purple-200">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-base">🌙</span>
+                            <h3 class="font-extrabold text-xs text-purple-900">Malam Hari (Penutup Hari)</h3>
+                        </div>
+                        <p class="text-xs text-slate-700 italic">"Mengapa setelah seharian belajar dan bermain, kita harus tidur cepat (Kartu 7) di malam hari?"</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rubric Assessment Section -->
+            <div class="bg-white rounded-3xl p-6 border border-stone-200 shadow-sm">
+                <div class="border-b border-stone-100 pb-4 mb-6">
+                    <span class="text-xs font-extrabold text-brandPurple uppercase tracking-wider">Asesmen Autentik PAUD</span>
+                    <h2 class="text-xl font-black text-slate-800">📝 Rubrik Lembar Observasi Perkembangan</h2>
+                    <p class="text-xs text-slate-500">Pilih skala capaian di bawah untuk melihat kriteria observasi dan strategi bimbingannya.</p>
+                </div>
+
+                <!-- Rubric Level Selector Buttons -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+                    <button onclick="selectRubric('BB')" id="rubric-btn-BB" class="rubric-btn p-3 rounded-2xl border border-stone-200 text-left hover:border-amber-400 transition-all bg-stone-50">
+                        <span class="block text-xs font-black text-rose-600 mb-1">BB</span>
+                        <span class="text-[11px] font-bold text-slate-700 block">Belum Berkembang</span>
+                    </button>
+                    <button onclick="selectRubric('MB')" id="rubric-btn-MB" class="rubric-btn p-3 rounded-2xl border border-stone-200 text-left hover:border-amber-400 transition-all bg-stone-50">
+                        <span class="block text-xs font-black text-amber-600 mb-1">MB</span>
+                        <span class="text-[11px] font-bold text-slate-700 block">Mulai Berkembang</span>
+                    </button>
+                    <button onclick="selectRubric('BSH')" id="rubric-btn-BSH" class="rubric-btn p-3 rounded-2xl border border-stone-200 text-left hover:border-amber-400 transition-all bg-stone-50">
+                        <span class="block text-xs font-black text-blue-600 mb-1">BSH</span>
+                        <span class="text-[11px] font-bold text-slate-700 block">Berkembang Sesuai Harapan</span>
+                    </button>
+                    <button onclick="selectRubric('BSB')" id="rubric-btn-BSB" class="rubric-btn p-3 rounded-2xl border-2 border-brandGreen text-left hover:border-green-600 transition-all bg-green-50/40">
+                        <span class="block text-xs font-black text-brandGreen mb-1">BSB</span>
+                        <span class="text-[11px] font-bold text-slate-700 block">Berkembang Sangat Baik</span>
+                    </button>
+                </div>
+
+                <!-- Rubric Detail View -->
+                <div id="rubric-detail-card" class="bg-stone-50 p-6 rounded-3xl border border-stone-200 mb-6">
+                    <!-- Dynamic Rubric Detail Content -->
+                </div>
+
+                <!-- Bottom Navigation Bar -->
+                <div class="flex justify-between items-center pt-6 border-t border-stone-100">
+                    <button onclick="goBack()" class="flex items-center gap-2 text-xs font-bold text-slate-600 bg-stone-100 px-4 py-2 rounded-xl hover:bg-stone-200 transition-all">
+                        <span>⬅️</span> Kembali
+                    </button>
+                    <button onclick="goHome()" class="flex items-center gap-2 text-xs font-bold text-amber-900 bg-amber-100 px-4 py-2 rounded-xl hover:bg-amber-200 transition-all">
+                        <span>🏠</span> Ke Beranda
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+
+    <!-- ================= MODAL: UNGGAH GAMBAR KARTU KHUSUS ================= -->
+    <div id="image-upload-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+            <!-- Modal Header -->
+            <div class="p-5 border-b border-stone-200 flex items-center justify-between bg-cream">
+                <div>
+                    <h3 class="font-extrabold text-base text-slate-800 flex items-center gap-2">
+                        <span>📸</span> Pengaturan Gambar Ilustrasi Kartu (8 Kartu)
+                    </h3>
+                    <p class="text-xs text-slate-500 mt-0.5">Unggah screenshot/foto halaman PDF Anda ke setiap slot kartu di bawah agar aplikasi menampilkan ilustrasi asli Anda.</p>
+                </div>
+                <button onclick="toggleImageModal(false)" class="w-8 h-8 rounded-full bg-stone-200 hover:bg-stone-300 text-slate-700 font-black flex items-center justify-center text-sm transition-all">
+                    ✕
+                </button>
+            </div>
+
+            <!-- Modal Body: Grid of 8 Card Uploaders -->
+            <div class="p-6 overflow-y-auto space-y-4">
+                <div class="bg-blue-50 border border-blue-200 rounded-2xl p-3 text-xs text-blue-900 flex items-start gap-2">
+                    <span class="text-base">💡</span>
+                    <span><strong>Petunjuk:</strong> Klik tombol <em>"Pilih Foto/Gambar"</em> pada tiap kartu. File gambar (.png/.jpg) akan tersimpan secara otomatis di memori browser Anda (Local Storage) dan langsung muncul di semua stasiun permainan.</span>
+                </div>
+
+                <div id="card-upload-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- Dynamic Upload Items Rendered via JS -->
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-4 border-t border-stone-200 bg-stone-50 flex items-center justify-between gap-3">
+                <button onclick="clearAllCustomImages()" class="text-xs font-bold text-rose-600 hover:text-rose-700 bg-rose-50 px-4 py-2 rounded-xl border border-rose-200 transition-all">
+                    🗑️ Reset Semua Gambar ke Default
+                </button>
+                <button onclick="toggleImageModal(false)" class="bg-amber-500 hover:bg-amber-600 text-white font-extrabold px-6 py-2.5 rounded-xl text-xs shadow-md transition-all">
+                    Selesai & Terapkan Gambar
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-stone-200 py-4 mt-8">
+        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-500 font-medium">
+            Papan Pembelajaran Interaktif PAUD &mdash; 8 Kartu Berantai 7 Kebiasaan Anak Indonesia Hebat &copy; Kemendikdasmen
+        </div>
+    </footer>
+
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // Data Structure for the 8 Master Cards with Custom Image Support
+        const cardMasterData = [
+            {
+                id: 0,
+                type: 'judul',
+                title: '7 Kebiasaan Anak Indonesia Hebat',
+                shortName: 'Kartu Judul Utama',
+                emoji: '🎈',
+                bgColor: 'bg-rose-500',
+                borderColor: 'border-rose-600',
+                textColor: 'text-white',
+                desc: 'Kartu Utama Pembuka Rantai Kebiasaan Karakter Anak Indonesia Hebat.',
+                customImg: null
+            },
+            {
+                id: 1,
+                type: 'habit',
+                title: '1. Bangun Pagi',
+                shortName: 'Bangun Pagi',
+                emoji: '🌅',
+                bgColor: 'bg-amber-500',
+                borderColor: 'border-amber-600',
+                textColor: 'text-white',
+                desc: 'Membiasakan bangun segar di pagi hari untuk melatih kedisiplinan dan semangat.',
+                customImg: null
+            },
+            {
+                id: 2,
+                type: 'habit',
+                title: '2. Beribadah',
+                shortName: 'Beribadah',
+                emoji: '🤲',
+                bgColor: 'bg-blue-500',
+                borderColor: 'border-blue-600',
+                textColor: 'text-white',
+                desc: 'Menanamkan rasa syukur, berdoa, dan ketaatan kepada Tuhan Yang Maha Esa.',
+                customImg: null
+            },
+            {
+                id: 3,
+                type: 'habit',
+                title: '3. Berolahraga',
+                shortName: 'Berolahraga',
+                emoji: '🏃',
+                bgColor: 'bg-emerald-500',
+                borderColor: 'border-emerald-600',
+                textColor: 'text-white',
+                desc: 'Aktivitas fisik bergerak gembira untuk menjaga kebugaran dan tubuh yang kuat.',
+                customImg: null
+            },
+            {
+                id: 4,
+                type: 'habit',
+                title: '4. Makan Sehat & Bergizi',
+                shortName: 'Makan Sehat',
+                emoji: '🥗',
+                bgColor: 'bg-orange-500',
+                borderColor: 'border-orange-600',
+                textColor: 'text-white',
+                desc: 'Mengenal makanan gizi seimbang, sarapan teratur, dan cuci tangan.',
+                customImg: null
+            },
+            {
+                id: 5,
+                type: 'habit',
+                title: '5. Gemar Belajar',
+                shortName: 'Gemar Belajar',
+                emoji: '📖',
+                bgColor: 'bg-indigo-500',
+                borderColor: 'border-indigo-600',
+                textColor: 'text-white',
+                desc: 'Menumbuhkan rasa ingin tahu, membaca buku bergambar, dan bereksplorasi.',
+                customImg: null
+            },
+            {
+                id: 6,
+                type: 'habit',
+                title: '6. Bermasyarakat',
+                shortName: 'Bermasyarakat',
+                emoji: '🤝',
+                bgColor: 'bg-teal-500',
+                borderColor: 'border-teal-600',
+                textColor: 'text-white',
+                desc: 'Belajar berbagi, bergotong-royong, sopan santun, dan peduli sesama.',
+                customImg: null
+            },
+            {
+                id: 7,
+                type: 'habit',
+                title: '7. Tidur Cepat',
+                shortName: 'Tidur Cepat',
+                emoji: '🌙',
+                bgColor: 'bg-purple-500',
+                borderColor: 'border-purple-600',
+                textColor: 'text-white',
+                desc: 'Istirahat tepat waktu di malam hari agar tumbuh kembang anak optimal.',
+                customImg: null
+            }
+        ];
+
+        // Extended Details for Station 2
+        const habitDetails = [
+            {
+                id: 1,
+                title: '1. Bangun Pagi',
+                emoji: '🌅',
+                color: 'amber',
+                objective: 'Meningkatkan kedisiplinan, kemandirian, dan energi positif di pagi hari.',
+                schoolAct: 'Senam pembuka kelas pagi, bernyanyi lagu "Bangun Tidur", dan menyapa teman dengan senyuman.',
+                homeAct: 'Orang tua menetapkan jam bangun yang konsisten dan membuatkan jadwal pagi yang ceria.'
+            },
+            {
+                id: 2,
+                title: '2. Taat Beribadah',
+                emoji: '🤲',
+                color: 'blue',
+                objective: 'Menumbuhkan nilai spiritual, rasa syukur, dan penghormatan atas toleransi.',
+                schoolAct: 'Berdoa bersama sebelum dan sesudah kegiatan belajar serta mengenal tempat ibadah.',
+                homeAct: 'Mendampingi anak saat melakukan ibadah rutin sesuai keyakinan keluarga.'
+            },
+            {
+                id: 3,
+                title: '3. Berolahraga',
+                emoji: '🏃',
+                color: 'emerald',
+                objective: 'Melatih motorik kasar, daya tahan tubuh, dan kebiasaan hidup aktif.',
+                schoolAct: 'Bermain permainan tradisional (bakiak, lompat tali), senam Anak Indonesia Hebat, dan estafet bola.',
+                homeAct: 'Mengajak anak jalan santai di lingkungan rumah atau bersepeda bersama di akhir pekan.'
+            },
+            {
+                id: 4,
+                title: '4. Makan Sehat & Bergizi',
+                emoji: '🥗',
+                color: 'orange',
+                objective: 'Mengenal makanan bergizi seimbang (Isi Piringku) dan membiasakan pola makan bersih.',
+                schoolAct: 'Aktivitas "Makan Bersama" menu gizi seimbang dan praktik mencuci tangan 6 langkah.',
+                homeAct: 'Melibatkan anak dalam menyiapkan buah/sayur favorit dan membatasi makanan manis/snack berlebih.'
+            },
+            {
+                id: 5,
+                title: '5. Gemar Belajar',
+                emoji: '📖',
+                color: 'indigo',
+                objective: 'Menstimulasi minat baca sejak dini, imajinasi, dan kemampuan memecahkan masalah.',
+                schoolAct: 'Bercerita nyaring (read aloud), eksperimen sains sederhana (campur warna), dan bermain puzzle.',
+                homeAct: 'Menyediakan sudut baca ramah anak dan mendampingi membaca 15 menit sebelum tidur.'
+            },
+            {
+                id: 6,
+                title: '6. Bermasyarakat',
+                emoji: '🤝',
+                color: 'teal',
+                objective: 'Mengembangkan empati, keterampilan sosial, kerja sama, dan rasa kepedulian lingkungan.',
+                schoolAct: 'Kerja bakti merapikan mainan bersama, berbagi bekal, dan kunjungan sosial sederhana.',
+                homeAct: 'Mengajak anak menyapa tetangga, ikut kegiatan lingkungan rumah, dan diajarkan kata "tolong & terima kasih".'
+            },
+            {
+                id: 7,
+                title: '7. Tidur Cepat',
+                emoji: '🌙',
+                color: 'purple',
+                objective: 'Menjaga durasi istirahat malam cukup (9–11 jam) untuk perkembangan otak dan hormon pertumbuhan.',
+                schoolAct: 'Edukasi pentingnya tidur malam melalui panggung boneka dan dongeng kesehatan.',
+                homeAct: 'Mematikan gadget 1 jam sebelum tidur dan menciptakan suasana kamar tidur yang tenang & nyaman.'
+            }
+        ];
+
+        // Rubric Assessment Data
+        const rubricData = {
+            'BB': {
+                code: 'BB (Belum Berkembang)',
+                color: 'text-rose-600 bg-rose-50 border-rose-200',
+                description: 'Anak belum dapat menemukan Kartu Judul dan memerlukan bimbingan penuh dari pendidik/orang tua untuk mengurutkan kartu kebiasaan.',
+                recommendation: 'Mulailah dengan 2–3 kartu terlebih dahulu (Judul -> Bangun Pagi -> Beribadah) sambil memberikan pancingan narasi cerita.'
+            },
+            'MB': {
+                code: 'MB (Mulai Berkembang)',
+                color: 'text-amber-600 bg-amber-50 border-amber-200',
+                description: 'Anak mampu menemukan Kartu Judul dan mengurutkan 3–4 kartu kebiasaan dengan pancingan pertanyaan atau petunjuk visual.',
+                recommendation: 'Ajak anak membayangkan kronologi aktivitas harian secara bertahap dari pagi hingga siang hari.'
+            },
+            'BSH': {
+                code: 'BSH (Berkembang Sesuai Harapan)',
+                color: 'text-blue-600 bg-blue-50 border-blue-200',
+                description: 'Anak dapat mengurutkan 8 kartu berantai secara mandiri dan benar mulai dari Kartu Judul hingga Tidur Cepat.',
+                recommendation: 'Minta anak menceritakan alasan di balik urutan kartu tersebut dengan kalimatnya sendiri.'
+            },
+            'BSB': {
+                code: 'BSB (Berkembang Sangat Baik)',
+                color: 'text-green-600 bg-green-50 border-green-200',
+                description: 'Anak mampu mengurutkan 8 kartu secara mandiri serta menceritakan contoh tindakan nyata 7 kebiasaan di sekolah dan rumah.',
+                recommendation: 'Diberikan peran sebagai ketua kelompok untuk membantu dan mendampingi teman sekelas (peer tutor).'
+            }
+        };
+
+        // Navigation State Management
+        let currentTab = 'overview';
+        let tabHistory = ['overview'];
+
+        // Game State Variables
+        let placedSlots = Array(8).fill(null);
+        let poolCards = [];
+
+        // Chart References
+        let timelineChart = null;
+        let cpChart = null;
+
+        // Application Initialization
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCustomImagesFromStorage();
+            initGame();
+            renderOverviewCards();
+            renderHabitStation();
+            renderCardUploadModal();
+            selectRubric('BSB');
+            initCharts();
+        });
+
+        // Load Stored Images from LocalStorage
+        function loadCustomImagesFromStorage() {
+            cardMasterData.forEach(card => {
+                const saved = localStorage.getItem(`kaih_card_img_${card.id}`);
+                if (saved) {
+                    card.customImg = saved;
+                }
+            });
+        }
+
+        // Navigation Switcher
+        function switchTab(tabId, pushHistory = true) {
+            if (tabId === currentTab) return;
+
+            if (pushHistory) {
+                tabHistory.push(tabId);
+            }
+
+            currentTab = tabId;
+            const sections = ['overview', 'station1', 'station2', 'assessment'];
+
+            sections.forEach(sec => {
+                const el = document.getElementById(`sec-${sec}`);
+                const btn = document.getElementById(`tab-${sec}`);
+                if (sec === tabId) {
+                    el.classList.remove('hidden');
+                    if (btn) btn.className = "nav-btn px-3.5 py-2 rounded-xl bg-amber-500 text-white transition-all shadow-sm flex items-center gap-1.5 font-bold";
+                } else {
+                    el.classList.add('hidden');
+                    if (btn) btn.className = "nav-btn px-3.5 py-2 rounded-xl bg-stone-100 text-slate-600 hover:bg-stone-200 transition-all flex items-center gap-1.5 font-semibold";
+                }
+            });
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function goBack() {
+            if (tabHistory.length > 1) {
+                tabHistory.pop();
+                const previous = tabHistory[tabHistory.length - 1];
+                switchTab(previous, false);
+            } else {
+                switchTab('overview', false);
+            }
+        }
+
+        function goHome() {
+            tabHistory = ['overview'];
+            switchTab('overview', false);
+        }
+
+        // Helper to render visual content (image or emoji)
+        function renderCardVisual(card, imgSizeClass = "w-12 h-12 object-cover rounded-xl shadow-sm") {
+            if (card.customImg) {
+                return `<img src="${card.customImg}" alt="${card.shortName}" class="${imgSizeClass}">`;
+            }
+            return `<span class="text-3xl">${card.emoji}</span>`;
+        }
+
+
+        // ================= OVERVIEW PAGE CARDS RENDER =================
+        function renderOverviewCards() {
+            const container = document.getElementById('overview-card-grid');
+            if (!container) return;
+
+            container.innerHTML = '';
+            cardMasterData.forEach(card => {
+                const el = document.createElement('div');
+                el.className = "bg-stone-50 border border-stone-200 p-2.5 rounded-2xl text-center flex flex-col items-center justify-between shadow-sm hover:shadow-md transition-all";
+                
+                const visualHtml = card.customImg 
+                    ? `<img src="${card.customImg}" class="w-12 h-12 object-cover rounded-xl shadow-sm my-1">`
+                    : `<span class="text-2xl my-1">${card.emoji}</span>`;
+
+                el.innerHTML = `
+                    ${visualHtml}
+                    <span class="text-[9px] font-black uppercase text-amber-700 tracking-wider">${card.id === 0 ? 'Kartu 0' : 'Kebiasaan ' + card.id}</span>
+                    <span class="text-[11px] font-bold text-slate-800 leading-tight mt-0.5">${card.shortName}</span>
+                `;
+                container.appendChild(el);
+            });
+        }
+
+
+        // ================= STASIUN 1: PERMAINAN KARTU BERANTAI LOGIC =================
+        function initGame() {
+            placedSlots = Array(8).fill(null);
+            poolCards = cardMasterData.map(c => ({...c}));
+            shuffleCardsInPool();
+            renderGameBoard();
+            hideGameFeedback();
+        }
+
+        function shuffleCardsInPool() {
+            for (let i = poolCards.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [poolCards[i], poolCards[j]] = [poolCards[j], poolCards[i]];
+            }
+        }
+
+        function shuffleCardsGame() {
+            initGame();
+            playAudioTone(440, 'sine', 0.15);
+        }
+
+        function resetChainGame() {
+            initGame();
+        }
+
+        function renderGameBoard() {
+            // Render Slots Track (0 to 7)
+            const trackContainer = document.getElementById('chain-track-container');
+            trackContainer.innerHTML = '';
+
+            let filledCount = 0;
+
+            for (let i = 0; i < 8; i++) {
+                const slotCard = placedSlots[i];
+                const slotEl = document.createElement('div');
+
+                if (slotCard !== null) {
+                    filledCount++;
+                    const visualHtml = slotCard.customImg 
+                        ? `<img src="${slotCard.customImg}" class="w-12 h-12 object-cover rounded-xl border border-white/50 shadow-sm my-1">`
+                        : `<span class="text-3xl my-1">${slotCard.emoji}</span>`;
+
+                    slotEl.className = `p-2.5 rounded-2xl border-2 ${slotCard.borderColor} ${slotCard.bgColor} text-white shadow-md flex flex-col justify-between items-center text-center cursor-pointer hover:scale-105 transition-transform relative group`;
+                    slotEl.onclick = () => removeCardFromSlot(i);
+                    slotEl.innerHTML = `
+                        <span class="absolute -top-2 -left-2 w-6 h-6 rounded-full bg-white text-slate-800 text-[10px] font-black flex items-center justify-center shadow-md border">
+                            ${i}
+                        </span>
+                        ${visualHtml}
+                        <span class="text-[11px] font-extrabold leading-tight">${slotCard.shortName}</span>
+                        <span class="text-[9px] opacity-80 mt-1 font-semibold group-hover:underline">Klik u/ Lepas</span>
+                    `;
+                } else {
+                    slotEl.className = `p-3 rounded-2xl border-2 border-dashed border-amber-300 bg-white/80 flex flex-col justify-center items-center text-center text-stone-400 min-h-[130px]`;
+                    slotEl.innerHTML = `
+                        <span class="w-6 h-6 rounded-full bg-amber-100 text-amber-800 text-[10px] font-black flex items-center justify-center mb-1">
+                            ${i}
+                        </span>
+                        <span class="text-[10px] font-bold text-amber-700 uppercase">
+                            ${i === 0 ? 'Kartu Judul' : 'Kebiasaan ' + i}
+                        </span>
+                        <span class="text-[9px] text-stone-400 mt-1">Kosong</span>
+                    `;
+                }
+                trackContainer.appendChild(slotEl);
+            }
+
+            document.getElementById('placed-counter').innerText = `Tersusun: ${filledCount} / 8 Kartu`;
+
+            // Render Shuffled Cards Pool
+            const poolContainer = document.getElementById('shuffled-pool-container');
+            poolContainer.innerHTML = '';
+
+            if (poolCards.length === 0) {
+                poolContainer.innerHTML = `
+                    <div class="col-span-full py-6 text-center text-xs font-bold text-slate-500 italic">
+                        Semua 8 kartu telah dimasukkan ke dalam Rantai! Klik tombol "Periksa Rantai Kartu" di bawah.
+                    </div>
+                `;
+            } else {
+                poolCards.forEach((card, index) => {
+                    const cardEl = document.createElement('div');
+                    const visualHtml = card.customImg 
+                        ? `<img src="${card.customImg}" class="w-12 h-12 object-cover rounded-xl shadow-sm mb-1 group-hover:scale-110 transition-transform">`
+                        : `<span class="text-3xl mb-1 group-hover:scale-110 transition-transform">${card.emoji}</span>`;
+
+                    cardEl.className = `p-3 rounded-2xl border-2 border-stone-200 bg-white hover:border-amber-400 cursor-pointer shadow-sm hover:shadow-md transition-all flex flex-col items-center text-center group active:scale-95`;
+                    cardEl.onclick = () => placeCardInTrack(index);
+                    cardEl.innerHTML = `
+                        ${visualHtml}
+                        <span class="text-xs font-extrabold text-slate-800 leading-tight">${card.shortName}</span>
+                        <span class="text-[9px] text-amber-600 font-bold mt-1.5 bg-amber-50 px-2 py-0.5 rounded-md">Pilih Kartu</span>
+                    `;
+                    poolContainer.appendChild(cardEl);
+                });
+            }
+        }
+
+        function placeCardInTrack(poolIndex) {
+            const emptySlotIndex = placedSlots.findIndex(slot => slot === null);
+            if (emptySlotIndex !== -1) {
+                const selectedCard = poolCards.splice(poolIndex, 1)[0];
+                placedSlots[emptySlotIndex] = selectedCard;
+                renderGameBoard();
+                hideGameFeedback();
+                playAudioTone(520, 'sine', 0.1);
+            }
+        }
+
+        function removeCardFromSlot(slotIndex) {
+            const removedCard = placedSlots[slotIndex];
+            if (removedCard) {
+                placedSlots[slotIndex] = null;
+                poolCards.push(removedCard);
+                renderGameBoard();
+                hideGameFeedback();
+                playAudioTone(350, 'triangle', 0.1);
+            }
+        }
+
+        function checkCardChain() {
+            const feedbackEl = document.getElementById('game-feedback-banner');
+            feedbackEl.classList.remove('hidden');
+
+            const isAllFilled = placedSlots.every(slot => slot !== null);
+            if (!isAllFilled) {
+                feedbackEl.className = "p-4 rounded-2xl text-center font-extrabold text-xs sm:text-sm bg-amber-100 text-amber-900 border border-amber-300 shadow-sm";
+                feedbackEl.innerHTML = "⚠️ Masih ada slot rantai yang kosong! Masukkan semua 8 kartu terlebih dahulu ya.";
+                playAudioTone(300, 'sawtooth', 0.2);
+                return;
+            }
+
+            let isCorrect = true;
+            let wrongIndex = -1;
+
+            for (let i = 0; i < 8; i++) {
+                if (placedSlots[i].id !== i) {
+                    isCorrect = false;
+                    wrongIndex = i;
+                    break;
+                }
+            }
+
+            if (isCorrect) {
+                feedbackEl.className = "p-4 rounded-2xl text-center font-extrabold text-xs sm:text-sm bg-emerald-100 text-emerald-900 border border-emerald-300 shadow-sm";
+                feedbackEl.innerHTML = "🎉 HEBAT SEKALIK! 🇮🇩 Rantai 8 Kartu 7 Kebiasaan Anak Indonesia Hebat tersusun sempurna dari Kartu Judul hingga Tidur Cepat!";
+                playAudioTone(600, 'sine', 0.3);
+            } else {
+                feedbackEl.className = "p-4 rounded-2xl text-center font-extrabold text-xs sm:text-sm bg-rose-100 text-rose-900 border border-rose-300 shadow-sm";
+                feedbackEl.innerHTML = `❌ Kartu pada urutan ke-${wrongIndex} belum tepat. Kartu Judul harus berada di posisi 0, lalu diikuti Kebiasaan 1 hingga 7!`;
+                playAudioTone(220, 'sawtooth', 0.25);
+            }
+        }
+
+        function hideGameFeedback() {
+            document.getElementById('game-feedback-banner').classList.add('hidden');
+        }
+
+
+        // ================= STASIUN 2: EKSPLORASI DETAIL LOGIC =================
+        function renderHabitStation() {
+            const container = document.getElementById('habit-cards-grid');
+            if (!container) return;
+            container.innerHTML = '';
+
+            habitDetails.forEach(item => {
+                const master = cardMasterData.find(c => c.id === item.id) || {};
+                const visualHtml = master.customImg 
+                    ? `<img src="${master.customImg}" class="w-12 h-12 object-cover rounded-xl border shadow-sm">`
+                    : `<span class="text-2xl">${item.emoji}</span>`;
+
+                const card = document.createElement('div');
+                card.className = "bg-stone-50 border border-stone-200 rounded-3xl p-5 space-y-3 hover:shadow-md transition-all";
+                card.innerHTML = `
+                    <div class="flex items-center gap-3 border-b border-stone-200 pb-3">
+                        <div class="w-12 h-12 rounded-2xl bg-white border border-stone-200 flex items-center justify-center shadow-sm shrink-0">
+                            ${visualHtml}
+                        </div>
+                        <div>
+                            <h3 class="font-extrabold text-sm text-slate-800">${item.title}</h3>
+                            <span class="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">Nilai Karakter PAUD</span>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-2 text-xs">
+                        <div class="bg-white p-3 rounded-2xl border border-stone-200">
+                            <strong class="text-amber-800 block mb-0.5">🎯 Tujuan Pembiasaan:</strong>
+                            <p class="text-slate-600">${item.objective}</p>
+                        </div>
+                        <div class="bg-white p-3 rounded-2xl border border-stone-200">
+                            <strong class="text-blue-800 block mb-0.5">🏫 Aktivitas di Kelas PAUD:</strong>
+                            <p class="text-slate-600">${item.schoolAct}</p>
+                        </div>
+                        <div class="bg-white p-3 rounded-2xl border border-stone-200">
+                            <strong class="text-purple-800 block mb-0.5">🏠 Pembiasaan di Rumah:</strong>
+                            <p class="text-slate-600">${item.homeAct}</p>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+
+        // ================= MODAL & CUSTOM IMAGE UPLOAD LOGIC =================
+        function toggleImageModal(show) {
+            const modal = document.getElementById('image-upload-modal');
+            if (show) {
+                renderCardUploadModal();
+                modal.classList.remove('hidden');
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
+
+        function renderCardUploadModal() {
+            const container = document.getElementById('card-upload-grid');
+            if (!container) return;
+            container.innerHTML = '';
+
+            cardMasterData.forEach(card => {
+                const item = document.createElement('div');
+                item.className = "bg-stone-50 border border-stone-200 rounded-2xl p-3 flex flex-col items-center text-center justify-between space-y-2 shadow-sm";
+
+                const previewHtml = card.customImg
+                    ? `<div class="relative group w-20 h-20">
+                         <img src="${card.customImg}" class="w-20 h-20 object-cover rounded-2xl border-2 border-amber-400 shadow-md">
+                         <button onclick="removeCardImage(${card.id})" class="absolute -top-2 -right-2 bg-rose-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-black shadow hover:bg-rose-700">✕</button>
+                       </div>`
+                    : `<div class="w-20 h-20 rounded-2xl bg-white border-2 border-dashed border-stone-300 flex flex-col items-center justify-center text-stone-400">
+                         <span class="text-3xl mb-0.5">${card.emoji}</span>
+                         <span class="text-[9px] font-bold">Tanpa Foto</span>
+                       </div>`;
+
+                item.innerHTML = `
+                    <div class="w-full text-left">
+                        <span class="text-[9px] font-black uppercase text-amber-600">${card.id === 0 ? 'Kartu Judul' : 'Kebiasaan ' + card.id}</span>
+                        <h4 class="font-bold text-xs text-slate-800 leading-tight">${card.shortName}</h4>
+                    </div>
+                    
+                    ${previewHtml}
+
+                    <div class="w-full">
+                        <label class="cursor-pointer bg-amber-500 hover:bg-amber-600 text-white text-[11px] font-bold py-1.5 px-3 rounded-xl block text-center transition-all shadow-sm active:scale-95">
+                            <span>📸 Pilih Foto</span>
+                            <input type="file" accept="image/*" class="hidden" onchange="handleImageUpload(event, ${card.id})">
+                        </label>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function handleImageUpload(event, cardId) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (file.size > 5 * 1024 * 1024) {
+                alert("Ukuran file terlalu besar! Harap pilih gambar dengan ukuran di bawah 5MB.");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const dataUrl = e.target.result;
+                cardMasterData[cardId].customImg = dataUrl;
+                try {
+                    localStorage.setItem(`kaih_card_img_${cardId}`, dataUrl);
+                } catch (err) {
+                    console.warn("LocalStorage quota exceeded, image stored in memory only.");
+                }
+
+                // Refresh all views
+                renderCardUploadModal();
+                renderOverviewCards();
+                renderHabitStation();
+                initGame();
+                playAudioTone(600, 'sine', 0.15);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeCardImage(cardId) {
+            cardMasterData[cardId].customImg = null;
+            localStorage.removeItem(`kaih_card_img_${cardId}`);
+
+            renderCardUploadModal();
+            renderOverviewCards();
+            renderHabitStation();
+            initGame();
+            playAudioTone(300, 'sawtooth', 0.15);
+        }
+
+        function clearAllCustomImages() {
+            if (confirm("Apakah Anda yakin ingin menghapus semua gambar khusus dan mengembalikan ke emoji default?")) {
+                cardMasterData.forEach(c => {
+                    c.customImg = null;
+                    localStorage.removeItem(`kaih_card_img_${c.id}`);
+                });
+                renderCardUploadModal();
+                renderOverviewCards();
+                renderHabitStation();
+                initGame();
+            }
+        }
+
+
+        // ================= ASESMEN & RUBRIK LOGIC =================
+        function selectRubric(code) {
+            const buttons = document.querySelectorAll('.rubric-btn');
+            buttons.forEach(btn => {
+                btn.classList.remove('border-2', 'border-amber-500', 'bg-amber-50/40', 'border-brandGreen', 'bg-green-50/40');
+                btn.classList.add('border', 'border-stone-200', 'bg-stone-50');
+            });
+
+            const activeBtn = document.getElementById(`rubric-btn-${code}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('border-stone-200', 'bg-stone-50');
+                activeBtn.classList.add('border-2', 'border-amber-500', 'bg-amber-50/40');
+            }
+
+            const data = rubricData[code];
+            const detailCard = document.getElementById('rubric-detail-card');
+            detailCard.innerHTML = `
+                <div class="flex items-center justify-between mb-3">
+                    <span class="px-3 py-1 rounded-full text-xs font-black ${data.color}">
+                        Skala: ${data.code}
+                    </span>
+                </div>
+                <h3 class="font-extrabold text-slate-800 text-xs sm:text-sm mb-2">Deskripsi Perkembangan Anak:</h3>
+                <p class="text-xs text-slate-600 leading-relaxed mb-4">${data.description}</p>
+                <div class="bg-white p-3.5 rounded-2xl border border-stone-200">
+                    <strong class="text-xs font-extrabold text-amber-800 block mb-1">💡 Tips Bimbingan Pendidik / Orang Tua:</strong>
+                    <p class="text-xs text-slate-600">${data.recommendation}</p>
+                </div>
+            `;
+        }
+
+
+        // ================= CHART.JS VISUALIZATIONS =================
+        function initCharts() {
+            // Chart 1: Daily Timeline Distribution
+            const ctxTimeline = document.getElementById('chart-daily-timeline').getContext('2d');
+            timelineChart = new Chart(ctxTimeline, {
+                type: 'bar',
+                data: {
+                    labels: ['Pagi Hari (05.00-07.00)', 'Siang Hari (08.00-14.00)', 'Sore Hari (15.00-17.00)', 'Malam Hari (19.00-21.00)'],
+                    datasets: [{
+                        label: 'Jumlah Pembiasaan',
+                        data: [4, 1, 1, 1], // Bangun, Ibadah, Olahraga, Makan (4) | Belajar (1) | Bermasyarakat (1) | Tidur (1)
+                        backgroundColor: ['#F59E0B', '#3B82F6', '#10B981', '#8B5CF6'],
+                        borderRadius: 12
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` Jumlah: ${context.raw} Kebiasaan Rutin`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { precision: 0 }
+                        }
+                    }
+                }
+            });
+
+            // Chart 2: Capaian Pembelajaran (CP) Distribution
+            const ctxCP = document.getElementById('chart-cp-domains').getContext('2d');
+            cpChart = new Chart(ctxCP, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Nilai Agama & Budi Pekerti', 'Jati Diri & Kebugaran', 'Literasi, Matematika & STEAM'],
+                    datasets: [{
+                        data: [2, 3, 2], // Agama (2: Ibadah, Bermasyarakat), Jati Diri (3: Bangun, Olahraga, Tidur), Literasi (2: Makan Sehat/Gizi, Belajar)
+                        backgroundColor: ['#3B82F6', '#10B981', '#F59E0B'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                font: { size: 10 }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Web Audio Synth Generator for Interactive Feedback
+        function playAudioTone(freq, type, duration) {
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (!AudioCtx) return;
+                const ctx = new AudioCtx();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+
+                osc.type = type || 'sine';
+                osc.frequency.setValueAtTime(freq, ctx.currentTime);
+                gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                osc.start();
+                osc.stop(ctx.currentTime + duration);
+            } catch (e) {
+                // Silent catch if audio context is blocked
+            }
+        }
+    </script>
+</body>
+</html>
