@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Papan Interaktif Anak PAUD</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #dff7e3, #fff7c7);
+            min-height: 100vh;
+            padding: 25px 15px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: auto;
+            text-align: center;
+        }
+
+        .header {
+            background: white;
+            border-radius: 25px;
+            padding: 30px 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+        }
+
+        .header h1 {
+            font-size: 32px;
+            color: #218c5a;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 18px;
+            line-height: 1.5;
+        }
+
+        .emoji {
+            font-size: 55px;
+            margin-bottom: 10px;
+        }
+
+        .activities {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 25px;
+            padding: 25px 20px;
+            box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .number {
+            font-size: 45px;
+            margin-bottom: 10px;
+        }
+
+        .card h2 {
+            font-size: 20px;
+            margin-bottom: 18px;
+            color: #333;
+            line-height: 1.4;
+        }
+
+        .button {
+            display: inline-block;
+            text-decoration: none;
+            color: white;
+            padding: 13px 25px;
+            border-radius: 30px;
+            font-size: 17px;
+            font-weight: bold;
+        }
+
+        .green {
+            background: #35a866;
+        }
+
+        .yellow {
+            background: #e5a900;
+        }
+
+        .blue {
+            background: #3689d6;
+        }
+
+        .purple {
+            background: #8b63c7;
+        }
+
+        .footer {
+            margin-top: 30px;
+            background: white;
+            border-radius: 20px;
+            padding: 15px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        @media (max-width: 600px) {
+
+            .header h1 {
+                font-size: 25px;
+            }
+
+            .header p {
+                font-size: 16px;
+            }
+
+            .card h2 {
+                font-size: 18px;
+            }
+
+            .button {
+                width: 90%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="header">
+
+        <div class="emoji">🌈 🧒 👧 📚</div>
+
+        <h1>Papan Interaktif Anak PAUD</h1>
+
+        <p>
+            Halo Ayah, Bunda, dan Anak-anak! 👋
+            <br>
+            Yuk, pilih kegiatan yang ingin dimainkan.
+        </p>
+
+    </div>
+
+
+    <div class="activities">
+
+        <!-- KEGIATAN 1 -->
+        <div class="card">
+
+            <div class="number">🌟</div>
+
+            <h2>
+                1. 7 Kebiasaan Anak Indonesia Hebat
+            </h2>
+
+            <a class="button green"
+               href="Media%20PAUD%20Lomba/1.7%20kebiasaan%20anak%20indonesia%20hebat/">
+                ▶ Mulai Bermain
+            </a>
+
+        </div>
+
+
+        <!-- KEGIATAN 2 -->
+        <div class="card">
+
+            <div class="number">🎒</div>
+
+            <h2>
+                2. Sebelum Aku Berangkat Sekolah
+            </h2>
+
+            <a class="button yellow"
+               href="Media%20PAUD%20Lomba/2.%20Sebelum%20aku%20berangkat%20sekolah/">
+                ▶ Mulai Bermain
+            </a>
+
+        </div>
+
+
+        <!-- KEGIATAN 3 -->
+        <div class="card">
+
+            <div class="number">🌱</div>
+
+            <h2>
+                3. Kebun Sayurku yang Subur
+            </h2>
+
+            <a class="button blue"
+               href="Media%20PAUD%20Lomba/3.%20Kebun%20sayurku%20yang%20subur/">
+                ▶ Mulai Bermain
+            </a>
+
+        </div>
+
+
+        <!-- KEGIATAN 4 -->
+        <div class="card">
+
+            <div class="number">🥑</div>
+
+            <h2>
+                4. Jus Alpukat Kesukaanku
+            </h2>
+
+            <a class="button purple"
+               href="Media%20PAUD%20Lomba/4.%20Jus%20alpukat%20kesukaanku/">
+                ▶ Mulai Bermain
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <div class="footer">
+        🌱 Media Pembelajaran Interaktif untuk Anak Usia Dini
+    </div>
+
+</div>
+
+</body>
+</html>
