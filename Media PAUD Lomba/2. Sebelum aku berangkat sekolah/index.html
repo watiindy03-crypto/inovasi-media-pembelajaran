@@ -1104,12 +1104,24 @@
 
             if (isCorrect) {
                 feedbackEl.className = "p-4 rounded-2xl text-center font-extrabold text-xs sm:text-sm bg-emerald-100 text-emerald-900 border border-emerald-300 shadow-sm";
-                feedbackEl.innerHTML = "🎉 HEBAT SEKALIK! 🎒 Rantai 8 Kartu 'Sebelum Aku Berangkat Sekolah' tersusun sempurna dari Kartu Judul hingga Berangkat Sekolah!";
+                feedbackEl.innerHTML = "🎉 HEBAT SEKALI! 🎒 Rantai 8 Kartu 'Sebelum Aku Berangkat Sekolah' tersusun sempurna dari Kartu Judul hingga Berangkat Sekolah!";
                 playAudioTone(600, 'sine', 0.3);
+                const suara = new SpeechSynthesisUtterance("Hebat sekali!");
+suara.lang = "id-ID";
+suara.rate = 1.05;
+suara.pitch = 1.5;
+speechSynthesis.cancel();
+speechSynthesis.speak(suara);
             } else {
                 feedbackEl.className = "p-4 rounded-2xl text-center font-extrabold text-xs sm:text-sm bg-rose-100 text-rose-900 border border-rose-300 shadow-sm";
                 feedbackEl.innerHTML = `❌ Kartu pada urutan ke-${wrongIndex} belum tepat. Kartu Judul harus berada di posisi 0, lalu diikuti urutan Bangun Tidur hingga Berangkat Sekolah!`;
                 playAudioTone(220, 'sawtooth', 0.25);
+                const suaraSalah = new SpeechSynthesisUtterance("Coba lagi yaa");
+suaraSalah.lang = "id-ID";
+suaraSalah.rate = 1.05;
+suaraSalah.pitch = 1.4;
+speechSynthesis.cancel();
+speechSynthesis.speak(suaraSalah);
             }
         }
 
