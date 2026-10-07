@@ -969,10 +969,22 @@
                 feedbackEl.className = "p-4 rounded-2xl text-center font-extrabold text-xs sm:text-sm bg-emerald-100 text-emerald-900 border border-emerald-300 shadow-sm";
                 feedbackEl.innerHTML = "🎉 HEBAT SEKALI! 🇮🇩 Rantai 8 Kartu 7 Kebiasaan Anak Indonesia Hebat tersusun sempurna dari Kartu Judul hingga Tidur Cepat!";
                 playAudioTone(600, 'sine', 0.3);
+                const suara = new SpeechSynthesisUtterance("Hebat sekali!");
+suara.lang = "id-ID";
+suara.rate = 0.9;
+suara.pitch = 1.2;
+speechSynthesis.cancel();
+speechSynthesis.speak(suara);
             } else {
                 feedbackEl.className = "p-4 rounded-2xl text-center font-extrabold text-xs sm:text-sm bg-rose-100 text-rose-900 border border-rose-300 shadow-sm";
                 feedbackEl.innerHTML = `❌ Kartu pada urutan ke-${wrongIndex} belum tepat. Kartu Judul harus berada di posisi 0, lalu diikuti Kebiasaan 1 hingga 7!`;
                 playAudioTone(220, 'sawtooth', 0.25);
+               const suaraSalah = new SpeechSynthesisUtterance("Coba lagi yaa");
+suaraSalah.lang = "id-ID";
+suaraSalah.rate = 0.9;
+suaraSalah.pitch = 1.1;
+speechSynthesis.cancel();
+speechSynthesis.speak(suaraSalah); 
             }
         }
 
