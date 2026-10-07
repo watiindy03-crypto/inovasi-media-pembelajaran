@@ -971,8 +971,8 @@
                 playAudioTone(600, 'sine', 0.3);
                 const suara = new SpeechSynthesisUtterance("Hebat sekali!");
 suara.lang = "id-ID";
-suara.rate = 0.9;
-suara.pitch = 1.2;
+suara.rate = 1.05;
+suara.pitch = 1.5;
 speechSynthesis.cancel();
 speechSynthesis.speak(suara);
             } else {
@@ -981,8 +981,8 @@ speechSynthesis.speak(suara);
                 playAudioTone(220, 'sawtooth', 0.25);
                const suaraSalah = new SpeechSynthesisUtterance("Coba lagi yaa");
 suaraSalah.lang = "id-ID";
-suaraSalah.rate = 0.9;
-suaraSalah.pitch = 1.1;
+suaraSalah.rate = 1.05;
+suaraSalah.pitch = 1.4;
 speechSynthesis.cancel();
 speechSynthesis.speak(suaraSalah); 
             }
