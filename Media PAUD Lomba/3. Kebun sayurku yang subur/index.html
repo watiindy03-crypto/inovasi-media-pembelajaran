@@ -1104,12 +1104,20 @@
 
             if (isCorrect) {
                 feedbackEl.className = "p-4 rounded-2xl text-center font-extrabold text-xs sm:text-sm bg-emerald-100 text-emerald-900 border border-emerald-300 shadow-sm";
-                feedbackEl.innerHTML = "🎉 HEBAT SEKALIK! 🥦 Rantai 8 Kartu 'Kebun Sayurku yang Subur' tersusun sempurna dari Kartu Judul hingga Memasak Sayur!";
+                feedbackEl.innerHTML = "🎉 HEBAT SEKALI! 🥦 Rantai 8 Kartu 'Kebun Sayurku yang Subur' tersusun sempurna dari Kartu Judul hingga Memasak Sayur!";
                 playAudioTone(600, 'sine', 0.3);
+                const suara = new Audio("hebat_sekali.wav");
+suara.currentTime = 0;
+suara.play().catch(() => {});
+
+✅
             } else {
                 feedbackEl.className = "p-4 rounded-2xl text-center font-extrabold text-xs sm:text-sm bg-rose-100 text-rose-900 border border-rose-300 shadow-sm";
                 feedbackEl.innerHTML = `❌ Kartu pada urutan ke-${wrongIndex} belum tepat. Kartu Judul harus berada di posisi 0, lalu diikuti urutan Memberi Pupuk hingga Memasak Sayur!`;
                 playAudioTone(220, 'sawtooth', 0.25);
+                const suaraSalah = new Audio("coba_lagi_yaa.wav");
+suaraSalah.currentTime = 0;
+suaraSalah.play().catch(() => {});
             }
         }
 
