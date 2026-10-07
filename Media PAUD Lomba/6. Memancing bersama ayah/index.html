@@ -1067,10 +1067,16 @@
                 feedbackEl.className = "p-4 rounded-2xl text-center font-extrabold text-xs sm:text-sm bg-lime-100 text-lime-900 border border-lime-300 shadow-sm";
                 feedbackEl.innerHTML = '🎉 HEBAT SEKALI! 🎣 Rantai 8 Kartu \'Memancing Bersama Ayah\' tersusun sempurna!';
                 playAudioTone(600, 'sine', 0.3);
+                const suara = new Audio("hebat_sekali.mp3");
+suara.currentTime = 0;
+suara.play().catch(() => {});
             } else {
                 feedbackEl.className = "p-4 rounded-2xl text-center font-extrabold text-xs sm:text-sm bg-rose-100 text-rose-900 border border-rose-300 shadow-sm";
                 feedbackEl.innerHTML = `❌ Kartu pada urutan ke-${wrongIndex} belum tepat. Coba periksa kembali urutan cerita memancing bersama Ayah!`;
                 playAudioTone(220, 'sawtooth', 0.25);
+                const suaraSalah = new Audio("coba_lagi_yaa.mp3");
+suaraSalah.currentTime = 0;
+suaraSalah.play().catch(() => {});
             }
         }
 
